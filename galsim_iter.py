@@ -56,15 +56,16 @@ class GalsimKernel:
         
         #get wcs information from real data file (this doesnt change as model changes)                                                
         self.wcs = galsim.FitsWCS( image_file )
-        # position of galaxy in original image. (pixels) (doesnt iterate)
-        self.image_pos = galsim.PositionD( image_x, image_y )
+        # position of galaxy in original image. (pixels) (doesnt iterate) NEED TO FIGURE OUT RA VS DEC
+        self.image_pos = galsim.PositionD( self.galpos_ra, self.galpos_dec )
 
         # Read in real image for comparison to model
         #NEED TO FIGURE OUT HOW/IF THIS NEEDS TO BE PIXELIZED
         full_real_data_image = galsim.fits.read( self.real_img )
         
-        # Chop out real data stamp
-        self.real_data_stamp = full_rea_data_image[ galsim.BoundsI( image_x-32, image_x+32, image_y-32, image_y+32 ) ]
+        # Chop out real data stamp NEED TO DOUBLE CHECK RA VS DEC
+        self.real_data_stamp = full_rea_data_image[ galsim.BoundsI( self.galpos_ra-32, self.galpos_ra+32,
+                                                                    self.galpos_dec-32, self.galpos_dec+32 ) ]
 
     """
     This will manage the iterating process
