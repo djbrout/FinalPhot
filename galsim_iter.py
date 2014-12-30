@@ -8,6 +8,7 @@ TO DO LIST:
 2. Understand RA vs DEC in images
 3. figure out how to iterate
 4. Implement adjust_model()
+5. How do I get the galaxy positions???
 """
 
 import galsim
@@ -137,8 +138,12 @@ class GalsimKernel:
         return pix_img
 
 if __name__=='__main__':
-    real_img = ''
-    test = GalsimKernel(img)
+    image_dir = '/global/scratch2/sd/dbrout/20130829_SN-E1/g_01/'
+    real_img_without_SN = 'SNp1_228717_SN-E1_tile20_g_01.fits'
+    real_image_with_SN = 'SNp1_228717_SN-E1_tile20_g_01+fakeSN.fits'
+    
+    # Start-model and real-data are the same
+    test = GalsimKernel( real_img_without_SN, real_img_without_SN)
     
 
 #model_arr = [23,26,44],[12,1,44],[15,161,23]
