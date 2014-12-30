@@ -44,10 +44,10 @@ class GalsimKernel:
 
         self.satisfactory = satisfactory
 
-        self.mdoel_img_pix = self.pixelize( self.model_img )
+        self.model_img_pix = self.pixelize( self.model_img )
 
         #THE INITIAL GUESS FOR THE MODEL IS THE REAL IMAGE WITHOUT SN
-        self.model = numpy.array( model_img_pix, dtype=float )
+        self.model = numpy.array( self.model_img_pix, dtype=float )
 
         # Create supernova point source (ie. very very small gaussian)                                                                 
         self.sn = galsim.Gaussian( sigma = 1.e-8, flux = self.SN_flux )
