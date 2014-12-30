@@ -1,13 +1,47 @@
+"""
+Dillon Brout
+dbrout@physics.upenn.edu
+
+TO DO LIST:
+1.
+
+"""
+
 import galsim
 import galsim.des
 import numpy
 
-#INPUTS, PARAMS TO CONSTRAIN
-model_arr = [23,26,44],[12,1,44],[15,161,23]
-SN_flux = 10
-SN_x = 10 # arcsec from center of entire image (not stamp)
-SN_y = 10 # arsec from center of entire image (not stamp)
-##############
+class GalsimKernel:
+    """Pixelize the input image and use as a first guess towards a simulated image. Iterate to find original image to be convolved with psf to produce input image.
+    
+    a. Input image = real image
+    
+    b. Input Image --> pixelize --> GalSim --> simulated image
+    c. Adjust Input image.
+    d. Repeat from part b.
+    """
+    def __init__(self,real_img # whole image, not stamp
+                 ,SN_RA_guess=0 # arcsec from center of entire image (not stamp)
+                 ,SN_DEC_guess=0 # arsec from center of entire image (not stamp)
+                 ,SN_flux_guess=0.0):
+
+        self.real_img = real_img
+        self.SN_flux = SN_flux_guess
+
+        #NEED TO PIXELIZE real_img HERE!
+        self.real_img_pix = self.pixelize(self.real_img)
+        self.model = numpy.array(real_img_pix, dtype=float)
+
+    def pixelize(self,img):
+        pix_img = img#NEED TO IMPLEMENT
+        return pix_img
+
+if __name__=='__main__':
+    real_img = ''
+    test = GalsimKernel(img)
+    
+
+#model_arr = [23,26,44],[12,1,44],[15,161,23]
 
 array = numpy.array(model_arr, dtype=float)  # You build this. (model)
 
