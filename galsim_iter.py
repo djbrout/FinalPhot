@@ -55,7 +55,7 @@ class GalsimKernel:
         self.sn = sn.shift(galsim.PositionD( self.SN_RA_guess, self.SN_DEC_guess ))#NEED TO DOUBLE CHECK RA vs DEC
         
         #get wcs information from real data file (this doesnt change as model changes)                                                
-        self.wcs = galsim.FitsWCS( image_file )
+        self.wcs = galsim.FitsWCS( self.real_img )
         # position of galaxy in original image. (pixels) (doesnt iterate) NEED TO FIGURE OUT RA VS DEC
         self.image_pos = galsim.PositionD( self.galpos_ra, self.galpos_dec )
 
