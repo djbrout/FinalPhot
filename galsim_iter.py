@@ -7,7 +7,7 @@ TO DO LIST:
 1b. pixelize real image
 2. Understand RA vs DEC in images
 3. figure out how to iterate
-4. Implement adjust_gal()
+4. Implement adjust_model()
 """
 
 import galsim
@@ -74,7 +74,7 @@ class GalsimKernel:
         correlation = 0.0
         while correlation < self.satisfactory:
             self.adjust_sn()
-            self.adjust_gal()
+            self.adjust_model()
             self.kernel()
             correlation = self.compare_model_and_sim()
 
@@ -125,7 +125,7 @@ class GalsimKernel:
     """
     Adjusting the galaxy model pixel values. Completely empirical!
     """
-    def adjust_gal(self):
+    def adjust_model(self):
         return
 
     def compare_model_and_sim(self):
