@@ -15,6 +15,7 @@ import galsim
 import galsim.des
 import numpy as np
 import pyfits as pf
+from scipy import stats
 
 class GalsimKernel:
     """Pixelize the input image and use as a first guess towards a simulated image. 
@@ -69,11 +70,12 @@ class GalsimKernel:
         #NEED TO FIGURE OUT HOW/IF THIS NEEDS TO BE PIXELIZED
         full_real_data_image = galsim.fits.read( self.real_img )
         
-        # Chop out real data stamp NEED TO DOUBLE CHECK RA VS DEC
+        # Chop out real data stamp NEED TO DOUBLE CHECK RA VS DEC. THEN RAVEL into single array for corr calc
         self.real_data_stamp = full_rea_data_image[ galsim.BoundsI( self.galpos_ra-self.stamp_RA, 
                                                                     self.galpos_ra+self.stamp_RA,
                                                                     self.galpos_dec-self.stamp_DEC, 
-                                                                    self.galpos_dec+self.stamp_DEC ) ]
+                                                                    self.galpos_dec+self.stamp_DEC 
+                                                                    ) ].ravel()
 
     """
     This will manage the iterating process
@@ -138,9 +140,10 @@ class GalsimKernel:
 
     """
     Use Pearson Correlation to calculate r value (univariate gaussian distr)
+    See Ivezic, Connolly, VanderPlas, Gray book p115
     """
     def compare_model_and_sim(self):
-
+        corr_coeff, p_value = stats.pearsonr(self.real_data_stamp, final.ravel()) 
         #string model and sim out into long 1D arrays and correlate
         return
 
