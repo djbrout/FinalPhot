@@ -63,6 +63,11 @@ class GalsimKernel:
         
         #get wcs information from real data file (this doesnt change as model changes)                                                
         self.wcs = galsim.FitsWCS( self.real_img )
+        # Get psf over the entire ccd
+        self.psf_model = galsim.des.DES_PSFEx(psfex_file, wcs=self.wcs)                             
+        # We just care about psf locally at the image pos
+        self.psf = self.psf_model.getPSF(image_pos)
+
         # position of galaxy in original image. (pixels) (doesnt iterate) NEED TO FIGURE OUT RA VS DEC
         self.image_pos = galsim.PositionD( self.galpos_ra, self.galpos_dec )
 
@@ -104,18 +109,12 @@ class GalsimKernel:
 
         # Combine galaxy model and supernova
         self.total_gal = self.gal_model + self.sn
-
-        # Get psf over the entire ccd
-        self.psf_model = galsim.des.DES_PSFEx(psfex_file, wcs=self.wcs)                             
-        
-        # We just care about psf locally at the image pos
-        self.psf = psf_model.getPSF(image_pos)
         
         # Convolve galaxy+sn model with psf
         self.final = galsim.Convolve( [total_gal, psf] )
         
         # create a blank stamp to be used by drawImage
-        self.sim_stamp = galsim.ImageF(64, 64, wcs=wcs.local(image_pos=image_pos) )
+        self.sim_stamp = galsim.ImageF(self.stamp_RA*2, self.stamp_DEC*2, wcs=wcs.local(image_pos=image_pos) )
 
         final.drawImage(image=stamp)
 
