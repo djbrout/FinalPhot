@@ -18,6 +18,7 @@ import numpy as np
 import pyfits as pf
 from scipy import stats
 import os
+import time
 
 class GalsimKernel:
     """Pixelize the input image and use as a first guess towards a simulated image. 
@@ -79,23 +80,23 @@ class GalsimKernel:
         self.wcs = galsim.FitsWCS( real_img_file )
 
         # Get psf over the entire ccd
-        self.psf_model = galsim.des.DES_PSFEx(self.DES_PSFEx_file, wcs=self.wcs)
+        self.psf_model = galsim.des.DES_PSFEx( self.DES_PSFEx_file, wcs=self.wcs)
 
         # position of galaxy in original image. (pixels) (doesnt iterate) NEED TO FIGURE OUT RA VS DEC
         self.image_pos = galsim.PositionD( self.galpos_ra, self.galpos_dec )
 
         # We just care about psf locally at the image pos
-        self.psf = self.psf_model.getPSF(self.image_pos)
+        self.psf = self.psf_model.getPSF( self.image_pos )
 
         # Read in real image for comparison to model
         #NEED TO FIGURE OUT HOW/IF THIS NEEDS TO BE PIXELIZED
         full_real_data_image = galsim.fits.read( real_img_file )
         
         # Chop out real data stamp NEED TO DOUBLE CHECK RA VS DEC.
-        self.real_data_stamp = full_real_data_image[ galsim.BoundsI( self.galpos_ra-self.stamp_RA, 
-                                                                    self.galpos_ra+self.stamp_RA,
-                                                                    self.galpos_dec-self.stamp_DEC, 
-                                                                    self.galpos_dec+self.stamp_DEC 
+        self.real_data_stamp = full_real_data_image[ galsim.BoundsI( self.galpos_ra-self.stamp_RA 
+                                                                    ,self.galpos_ra+self.stamp_RA
+                                                                    ,self.galpos_dec-self.stamp_DEC 
+                                                                    ,self.galpos_dec+self.stamp_DEC 
                                                                     ) ]
         print 'Done Innitting'
 
@@ -105,36 +106,59 @@ class GalsimKernel:
     def run(self):
         correlation = 0.0
         while correlation < self.satisfactory:
+            print 'Press Enter to continue'
+            raw_input()
             self.adjust_sn()
-            self.adjust_model()
+            print 'Done adjusting SN'
+            self.adjust_model() 
+            print 'Done adjusting model'
             self.kernel()
+            print 'Executed Kernel'
             correlation = self.compare_model_and_sim()
+            print 'Correlated'
 
 
     """                                                                                                                                    
     the kernel gets iterated over...                                                                                       
     """
     def kernel(self):
+        t1 = time.time()
+        print 'creating galsim image'
         # Convert model to galsim image
         self.im = galsim.Image(array=self.model, scale=0.5) # scale is arcsec/pixel
 
+        t2 = time.time()
+        print t2-t1
+        print 'creating gal_model'
         # Create interpolated image (can mess around with interp methods...)
         self.gal_model = galsim.InterpolatedImage(image=self.im, x_interpolant='linear')
 
-        # Make adjustments to location and flux of SN
-        self.adjust_sn()
 
+        t3 = time.time()
+        print t3-t2
+        print 'creating total_gal'
         # Combine galaxy model and supernova
         self.total_gal = self.gal_model + self.sn
-        
+
+        t4 = time.time()
+        print t4-t3
+        print 'convolving'
         # Convolve galaxy+sn model with psf
-        self.final = galsim.Convolve( [total_gal, psf] )
+        self.final = galsim.Convolve( [self.total_gal, self.psf] )
         
+        t5 = time.time()
+        print t5-t4
+        print 'stamping'
         # create a blank stamp to be used by drawImage
-        self.sim_stamp = galsim.ImageF(self.stamp_RA*2, self.stamp_DEC*2, wcs=wcs.local(image_pos=image_pos) )
+        self.sim_stamp = galsim.ImageF(self.stamp_RA*2, self.stamp_DEC*2, 
+                                        wcs=self.wcs.local(image_pos=self.image_pos) )
+        t6 = time.time()
+        print t6-t5
+        print 'drawing'
+        self.final_out_image = self.final.drawImage(image=self.sim_stamp)
 
-        self.final_out_image = final.drawImage(image=stamp)
-
+        t7 = time.time()
+        print t7-t6
     """
     Adjusting the guess for the location and flux of the supernova
     """
@@ -145,7 +169,16 @@ class GalsimKernel:
         # Shift SN relative to galaxy center                                                                                         
         #NEED TO FIGURE OUT PROPER WAY TO ADJUST (DOES THIS ALWAYS SHIFT FROM CENTER?)
         #NEED TO DOUBLE CHECK RA VS DEC
-        self.sn = sn.shift(galsim.PositionD( SN_RA_guess, SN_DEC_guess )) # arcsec  
+        if flux_adj == 0.0:
+            pass
+        else:
+            self.sn = galsim.Gaussian( sigma = 1.e-8, flux = self.SN_flux )
+        t2 = time.time()
+
+        if (ra_adj == 0.0) & (dec_adj == 0.0):
+            pass
+        else:
+            self.sn = self.sn.shift(galsim.PositionD( self.SN_RA_guess, self.SN_DEC_guess )) # arcsec  
         
 
     """
@@ -178,6 +211,6 @@ if __name__=='__main__':
                                 file_path=image_dir, 
                                 psf_file=psf_file)
     
-    #test.run()
+    test.run()
 
 #model_arr = [23,26,44],[12,1,44],[15,161,23]
