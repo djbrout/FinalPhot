@@ -44,12 +44,17 @@ class GalsimKernel:
                  , stamp_RA = 32
                  , stamp_DEC = 32
                  , psf_file = ''
+                 , outdir = None
                  ):
 
 
         real_img_file = os.path.join( file_path, real_img )
         model_img_file = os.path.join( file_path, real_img )
         self.DES_PSFEx_file = os.path.join( file_path, psf_file )
+
+        if not os.path.exists(outdir):
+            os.makedirs(outdir)
+        self.outdir = outdir
 
 
         self.real_img = pf.open( real_img_file )[0].data
@@ -88,6 +93,10 @@ class GalsimKernel:
         # We just care about psf locally at the image pos
         self.psf = self.psf_model.getPSF( self.image_pos )
 
+        # DEMO 7. Gets rid of FFT Runtime Error
+        # http://stackoverflow.com/questions/24966419/fft-runtime-error-in-running-galsim?newreg=fb140d2381ff47cda008d3ade724ed59
+        self.big_fft_params = galsim.GSParams( maximum_fft_size = 10240 )
+
         # Read in real image for comparison to model
         #NEED TO FIGURE OUT HOW/IF THIS NEEDS TO BE PIXELIZED
         full_real_data_image = galsim.fits.read( real_img_file )
@@ -98,6 +107,10 @@ class GalsimKernel:
                                                                     ,self.galpos_dec-self.stamp_DEC 
                                                                     ,self.galpos_dec+self.stamp_DEC 
                                                                     ) ]
+        real_data_filename = 'test_data_out.fits'
+        real_data_file_out = os.path.join( self.outdir, real_data_filename )
+        self.real_data_stamp.write( real_data_file_out )
+        self.real_stamp_array = pf.open( real_data_file_out )[0].data.ravel()
         print 'Done Innitting'
 
     """
@@ -115,7 +128,7 @@ class GalsimKernel:
             self.kernel()
             print 'Executed Kernel'
             correlation = self.compare_model_and_sim()
-            print 'Correlated'
+            print 'Correlated ' + str( correlation )
 
 
     """                                                                                                                                    
@@ -144,7 +157,7 @@ class GalsimKernel:
         print t4-t3
         print 'convolving'
         # Convolve galaxy+sn model with psf
-        self.final = galsim.Convolve( [self.total_gal, self.psf] )
+        self.final = galsim.Convolve( [self.total_gal, self.psf], gsparams = self.big_fft_params )
         
         t5 = time.time()
         print t5-t4
@@ -159,6 +172,12 @@ class GalsimKernel:
 
         t7 = time.time()
         print t7-t6
+
+        self.sim_filename = 'test_sim_out.fits'
+        self.simoutfile = os.path.join(self.outdir,self.sim_filename)
+        self.final_out_image.write(self.simoutfile) # Write to .fits file
+
+
     """
     Adjusting the guess for the location and flux of the supernova
     """
@@ -192,9 +211,10 @@ class GalsimKernel:
     See Ivezic, Connolly, VanderPlas, Gray book p115
     """
     def compare_model_and_sim( self ):
-        corr_coeff, p_value = stats.pearsonr( self.real_data_stamp, self.final_out_image.ravel() ) 
+        sim_array = pf.open( self.simoutfile )[0].data.ravel()
+        corr_coeff, p_value = stats.pearsonr( self.real_stamp_array, sim_array ) 
         #string model and sim out into long 1D arrays and correlate
-        return
+        return p_value
 
     def pixelize( self, img ):
         pix_img = img#NEED TO IMPLEMENT
@@ -205,11 +225,14 @@ if __name__=='__main__':
     real_img_without_SN = 'SNp1_228717_SN-E1_tile20_g_01.fits'
     real_image_with_SN = 'SNp1_228717_SN-E1_tile20_g_01+fakeSN.fits'
     psf_file = 'SNp1_228717_SN-E1_tile20_g_01.psf'
+    outdir = '/global/u1/d/dbrout/FinalPhot/out'
 
     # Initial guess for model is real img without SN
     test = GalsimKernel( real_img_without_SN, real_img_without_SN
-                                ,file_path = image_dir
-                                ,psf_file = psf_file)
+                                            , file_path = image_dir
+                                            , psf_file = psf_file
+                                            , outdir = outdir 
+                                            )
     
     test.run()
 
