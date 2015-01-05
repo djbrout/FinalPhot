@@ -3,12 +3,13 @@ Dillon Brout
 dbrout@physics.upenn.edu
 
 TO DO LIST:
-1. Implement pixelize image
-1b. pixelize real image
-2. Understand RA vs DEC in images
-3. figure out how to iterate
-4. Implement adjust_model()
-5. How do I get the galaxy positions???
+- figure out how to ravel the Galsim image
+- Implement pixelize image
+- pixelize real image
+- Understand RA vs DEC in images
+- figure out how to iterate
+- Implement adjust_model()
+- How do I get the galaxy positions???
 """
 
 import galsim
