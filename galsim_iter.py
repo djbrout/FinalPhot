@@ -31,7 +31,7 @@ class GalsimKernel:
     d. Repeat from part b.
     """
 
-    def __init__(self 
+    def __init__( self 
                  , real_img # whole image, not stamp
                  , model_img # whole image, not stamp, WITHOUT SN
                  , file_path = ''
@@ -103,7 +103,7 @@ class GalsimKernel:
     """
     This will manage the iterating process
     """
-    def run(self):
+    def run( self ):
         correlation = 0.0
         while correlation < self.satisfactory:
             print 'Press Enter to continue'
@@ -121,17 +121,17 @@ class GalsimKernel:
     """                                                                                                                                    
     the kernel gets iterated over...                                                                                       
     """
-    def kernel(self):
+    def kernel( self ):
         t1 = time.time()
         print 'creating galsim image'
         # Convert model to galsim image
-        self.im = galsim.Image(array=self.model, scale=0.5) # scale is arcsec/pixel
+        self.im = galsim.Image( array = self.model, scale = 0.5 ) # scale is arcsec/pixel
 
         t2 = time.time()
         print t2-t1
         print 'creating gal_model'
         # Create interpolated image (can mess around with interp methods...)
-        self.gal_model = galsim.InterpolatedImage(image=self.im, x_interpolant='linear')
+        self.gal_model = galsim.InterpolatedImage( image = self.im, x_interpolant = 'linear' )
 
 
         t3 = time.time()
@@ -150,19 +150,19 @@ class GalsimKernel:
         print t5-t4
         print 'stamping'
         # create a blank stamp to be used by drawImage
-        self.sim_stamp = galsim.ImageF(self.stamp_RA*2, self.stamp_DEC*2, 
-                                        wcs=self.wcs.local(image_pos=self.image_pos) )
+        self.sim_stamp = galsim.ImageF( self.stamp_RA*2, self.stamp_DEC*2, 
+                                        wcs = self.wcs.local(image_pos=self.image_pos) )
         t6 = time.time()
         print t6-t5
         print 'drawing'
-        self.final_out_image = self.final.drawImage(image=self.sim_stamp)
+        self.final_out_image = self.final.drawImage( image = self.sim_stamp )
 
         t7 = time.time()
         print t7-t6
     """
     Adjusting the guess for the location and flux of the supernova
     """
-    def adjust_sn(self,flux_adj=0.0,ra_adj=0.0,dec_adj=0.0):        
+    def adjust_sn( self, flux_adj = 0.0, ra_adj = 0.0, dec_adj = 0.0 ):        
         self.SN_flux += flux_adj
         self.SN_RA_guess += ra_adj
         self.SN_DEC_guess += dec_adj
@@ -178,25 +178,25 @@ class GalsimKernel:
         if (ra_adj == 0.0) & (dec_adj == 0.0):
             pass
         else:
-            self.sn = self.sn.shift(galsim.PositionD( self.SN_RA_guess, self.SN_DEC_guess )) # arcsec  
+            self.sn = self.sn.shift( galsim.PositionD( self.SN_RA_guess, self.SN_DEC_guess )) # arcsec  
         
 
     """
     Adjusting the galaxy model pixel values. Completely empirical!
     """
-    def adjust_model(self):
+    def adjust_model( self ):
         return
 
     """
     Use Pearson Correlation to calculate r value (univariate gaussian distr)
     See Ivezic, Connolly, VanderPlas, Gray book p115
     """
-    def compare_model_and_sim(self):
-        corr_coeff, p_value = stats.pearsonr(self.real_data_stamp, self.final_out_image.ravel()) 
+    def compare_model_and_sim( self ):
+        corr_coeff, p_value = stats.pearsonr( self.real_data_stamp, self.final_out_image.ravel() ) 
         #string model and sim out into long 1D arrays and correlate
         return
 
-    def pixelize(self,img):
+    def pixelize( self, img ):
         pix_img = img#NEED TO IMPLEMENT
         return pix_img
 
@@ -207,9 +207,9 @@ if __name__=='__main__':
     psf_file = 'SNp1_228717_SN-E1_tile20_g_01.psf'
 
     # Initial guess for model is real img without SN
-    test = GalsimKernel( real_img_without_SN, real_img_without_SN, 
-                                file_path=image_dir, 
-                                psf_file=psf_file)
+    test = GalsimKernel( real_img_without_SN, real_img_without_SN
+                                ,file_path = image_dir
+                                ,psf_file = psf_file)
     
     test.run()
 
