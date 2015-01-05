@@ -13,7 +13,8 @@ TO DO LIST:
 
 import galsim
 import galsim.des
-import numpy
+import numpy as np
+import pyfits as pf
 
 class GalsimKernel:
     """Pixelize the input image and use as a first guess towards a simulated image. 
@@ -35,6 +36,8 @@ class GalsimKernel:
                  , SN_DEC_guess = 0 # arsec from center of entire image (not stamp)
                  , SN_flux_guess = 0.0
                  , satisfactory = .8 # process is iterated until correlation reaches this value
+                 , stamp_RA = 32
+                 , stamp_DEC = 32
                  ):
 
         self.real_img = real_img
@@ -42,16 +45,18 @@ class GalsimKernel:
         self.SN_flux = SN_flux_guess
         self.galpos_ra = galpos_ra
         self.galpos_dec = galpos_dec
+        self.stamp_RA = stamp_RA
+        self.stamp_DEC = stamp_DEC
 
         self.satisfactory = satisfactory
 
         self.model_img_pix = self.pixelize( self.model_img )
 
-        #THE INITIAL GUESS FOR THE MODEL IS THE REAL IMAGE WITHOUT SN
         self.model = numpy.array( self.model_img_pix, dtype=float )
 
-        # Create supernova point source (ie. very very small gaussian)                                                                 
+        # Create supernova point source (ie. very very small gaussian)
         self.sn = galsim.Gaussian( sigma = 1.e-8, flux = self.SN_flux )
+
         # Shift SN relative to galaxy center
         self.sn = sn.shift(galsim.PositionD( self.SN_RA_guess, self.SN_DEC_guess ))#NEED TO DOUBLE CHECK RA vs DEC
         
@@ -65,8 +70,10 @@ class GalsimKernel:
         full_real_data_image = galsim.fits.read( self.real_img )
         
         # Chop out real data stamp NEED TO DOUBLE CHECK RA VS DEC
-        self.real_data_stamp = full_rea_data_image[ galsim.BoundsI( self.galpos_ra-32, self.galpos_ra+32,
-                                                                    self.galpos_dec-32, self.galpos_dec+32 ) ]
+        self.real_data_stamp = full_rea_data_image[ galsim.BoundsI( self.galpos_ra-self.stamp_RA, 
+                                                                    self.galpos_ra+self.stamp_RA,
+                                                                    self.galpos_dec-self.stamp_DEC, 
+                                                                    self.galpos_dec+self.stamp_DEC ) ]
 
     """
     This will manage the iterating process
@@ -129,7 +136,11 @@ class GalsimKernel:
     def adjust_model(self):
         return
 
+    """
+    Use Pearson Correlation to calculate r value (univariate gaussian distr)
+    """
     def compare_model_and_sim(self):
+
         #string model and sim out into long 1D arrays and correlate
         return
 
@@ -142,7 +153,7 @@ if __name__=='__main__':
     real_img_without_SN = 'SNp1_228717_SN-E1_tile20_g_01.fits'
     real_image_with_SN = 'SNp1_228717_SN-E1_tile20_g_01+fakeSN.fits'
     
-    # Start-model and real-data are the same
+    # Initial guess for model is real img without SN
     test = GalsimKernel( real_img_without_SN, real_img_without_SN)
     
 
