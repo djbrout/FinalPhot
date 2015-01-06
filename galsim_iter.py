@@ -3,6 +3,7 @@ Dillon Brout
 dbrout@physics.upenn.edu
 
 TO DO LIST:
+- figure out why the images are not the same size
 - figure out how to ravel the Galsim image
 - Implement pixelize image
 - pixelize real image
@@ -110,7 +111,9 @@ class GalsimKernel:
         real_data_filename = 'test_data_out.fits'
         real_data_file_out = os.path.join( self.outdir, real_data_filename )
         self.real_data_stamp.write( real_data_file_out )
-        self.real_stamp_array = pf.open( real_data_file_out )[0].data.ravel()
+        self.real_stamp = pf.open( real_data_file_out )[0].data
+        self.real_stamp_array = self.real_stamp.ravel()
+        print 'real_stamp '+str(self.real_stamp.shape)
         print 'Done Innitting'
 
     """
@@ -163,7 +166,7 @@ class GalsimKernel:
         print t5-t4
         print 'stamping'
         # create a blank stamp to be used by drawImage
-        self.sim_stamp = galsim.ImageF( self.stamp_RA*2, self.stamp_DEC*2, 
+        self.sim_stamp = galsim.ImageF( self.stamp_RA*2 + 1, self.stamp_DEC*2 + 1, 
                                         wcs = self.wcs.local(image_pos=self.image_pos) )
         t6 = time.time()
         print t6-t5
@@ -211,7 +214,9 @@ class GalsimKernel:
     See Ivezic, Connolly, VanderPlas, Gray book p115
     """
     def compare_model_and_sim( self ):
-        sim_array = pf.open( self.simoutfile )[0].data.ravel()
+        sim_matrix = pf.open( self.simoutfile )[0].data
+        sim_array = sim_matrix.ravel()
+        print 'sim_matrix '+str(sim_matrix.shape)
         corr_coeff, p_value = stats.pearsonr( self.real_stamp_array, sim_array ) 
         #string model and sim out into long 1D arrays and correlate
         return p_value
