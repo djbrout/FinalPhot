@@ -11,15 +11,19 @@ TO DO LIST:
 - figure out how to iterate
 - Implement adjust_model()
 - How do I get the galaxy positions???
+- How do i know which images are pre-post SN?
 """
 
-import galsim
-import galsim.des
+#import galsim
+#import galsim.des
 import numpy as np
 import pyfits as pf
 from scipy import stats
 import os
 import time
+import rdcol
+import sys
+import glob
 
 class GalsimKernel:
     """Pixelize the input image and use as a first guess towards a simulated image. 
@@ -225,12 +229,31 @@ class GalsimKernel:
         pix_img = img#NEED TO IMPLEMENT
         return pix_img
 
+def read_query( file, image_dir ):
+    cols = rdcol.read( file, 1, 2, ' ')
+    images = get_all_image_names( image_dir )
+    for exposure in cols['Exposure']:
+        pass
+
+
+def get_all_image_names( image_dir ):
+    images = []
+    for (dir, _, files) in os.walk( image_dir ):
+        for f in files:
+            path = os.path.join(dir, f)
+            if os.path.exists(path):
+                print path
+                raw_input()
+
 if __name__=='__main__':
-    image_dir = '/global/scratch2/sd/dbrout/20130829_SN-E1/g_01/'
+    image_dir = '/global/scratch2/sd/dbrout/'
     real_img_without_SN = 'SNp1_228717_SN-E1_tile20_g_01.fits'
     real_image_with_SN = 'SNp1_228717_SN-E1_tile20_g_01+fakeSN.fits'
     psf_file = 'SNp1_228717_SN-E1_tile20_g_01.psf'
     outdir = '/global/u1/d/dbrout/FinalPhot/out'
+    query_file = './queries/test.txt'
+
+    read_query( query_file, image_dir )
 
     # Initial guess for model is real img without SN
     test = GalsimKernel( real_img_without_SN, real_img_without_SN
