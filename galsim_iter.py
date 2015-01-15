@@ -262,26 +262,29 @@ if __name__=='__main__':
     image_dir = '/global/scratch2/sd/dbrout/'
     #real_img_without_SN = 'SNp1_228717_SN-E1_tile20_g_01.fits'
     #real_image_with_SN = 'SNp1_228717_SN-E1_tile20_g_01+fakeSN.fits'
-    psf_file = 'SNp1_228717_SN-E1_tile20_g_01.psf'
-    psf_file_full = os.path.join(image_dir, psf_file)
+    #psf_file = 'SNp1_228717_SN-E1_tile20_g_01.psf'
+    #psf_file_full = os.path.join(image_dir, psf_file)
     outdir = '/global/u1/d/dbrout/FinalPhot/out'
     query_file = './queries/test.txt'
 
+    print 'Started Reading'
     query, query_wheres, image_paths = read_query( query_file, image_dir )
 
     #Start by online looking at one image, one exposure
     real_img_without_SN = image_paths[0]
+    psf_file = real_img_without_SN.split('.')[0]+'.psf'
     this_exposure = query_wheres[0]
     #Need to double check x and y are correct columns
-    galpos_ra = np.array(query['x'])[this_exposure]
-    galpos_dec = np.array(query['y'])[this_exposure]
+    galpos_ra = np.array(query['RA'])[this_exposure]
+    galpos_dec = np.array(query['Dec'])[this_exposure]
     print galpos_ra
     print galpos_dec
-    raw_input()
+    print real_img_without_SN
+    print psf_file
 
     # Initial guess for model is real img without SN
     test = GalsimKernel( real_img_without_SN, real_img_without_SN
-                                            , psf_file = psf_file_full
+                                            , psf_file = psf_file
                                             , outdir = outdir 
                                             , galpos_ra = galpos_ra
                                             , galpos_dec = galpos_dec
