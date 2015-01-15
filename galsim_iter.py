@@ -2,28 +2,21 @@
 Dillon Brout
 dbrout@physics.upenn.edu
 
-TO DO LIST:
-- figure out why the images are not the same size
-- figure out how to ravel the Galsim image
-- Implement pixelize image
-- pixelize real image
-- Understand RA vs DEC in images
-- figure out how to iterate
-- Implement adjust_model()
-- How do I get the galaxy positions???
-- How do i know which images are pre-post SN?
+See README.md for To Do List
+
 """
 
-#import galsim
-#import galsim.des
+import sys
+sys.path.append("/global/u1/d/dbrout/FinalPhot/lib/") 
+
+import galsim
+import galsim.des
 import numpy as np
 import pyfits as pf
 from scipy import stats
 import os
 import time
 import rdcol
-import sys
-import glob
 
 class GalsimKernel:
     """Pixelize the input image and use as a first guess towards a simulated image. 
@@ -230,36 +223,68 @@ class GalsimKernel:
         return pix_img
 
 def read_query( file, image_dir ):
-    cols = rdcol.read( file, 1, 2, ' ')
-    images = get_all_image_names( image_dir )
-    for exposure in cols['Exposure']:
-        pass
+    query = rdcol.read( file, 1, 2, '\t')
+    images, exposure_nums = get_all_image_names( image_dir )
+    exposures = np.array( query['Exposure'] )
+
+    query_wheres = []
+    image_paths = []
+    for exposure in np.unique( exposures ):
+        query_wheres.append( [ exposures == exposure ] )
+        image_paths.append( images[ exposure_nums.index( str(int(exposure) ) ) ] ) 
+        #match up with a .fits file
+    print 'Made Image Arrays'
+    return query, query_wheres, image_paths
 
 
 def get_all_image_names( image_dir ):
     images = []
+    exposure_nums = []
     for (dir, _, files) in os.walk( image_dir ):
         for f in files:
             path = os.path.join(dir, f)
             if os.path.exists(path):
-                print path
-                raw_input()
+                if path.split('.')[-1] == 'fits':
+                    if len(path.split('+')) == 1:
+                        if len(path.split('.')) == 2:
+                            try:
+                                exposure_nums.append(path.split('/')[-1].split('_')[1])
+                                images.append(path)
+                            except IndexError:
+                                a = 'Image Doesnt Belong'
+                            #You should only be left with files of the form
+                            #/path_to_file/SNp1_228717_SN-E1_tile20_g_01.fits
+
+    print 'Got Images'
+    return images, exposure_nums
 
 if __name__=='__main__':
     image_dir = '/global/scratch2/sd/dbrout/'
-    real_img_without_SN = 'SNp1_228717_SN-E1_tile20_g_01.fits'
-    real_image_with_SN = 'SNp1_228717_SN-E1_tile20_g_01+fakeSN.fits'
+    #real_img_without_SN = 'SNp1_228717_SN-E1_tile20_g_01.fits'
+    #real_image_with_SN = 'SNp1_228717_SN-E1_tile20_g_01+fakeSN.fits'
     psf_file = 'SNp1_228717_SN-E1_tile20_g_01.psf'
+    psf_file_full = os.path.join(image_dir, psf_file)
     outdir = '/global/u1/d/dbrout/FinalPhot/out'
     query_file = './queries/test.txt'
 
-    read_query( query_file, image_dir )
+    query, query_wheres, image_paths = read_query( query_file, image_dir )
+
+    #Start by online looking at one image, one exposure
+    real_img_without_SN = image_paths[0]
+    this_exposure = query_wheres[0]
+    #Need to double check x and y are correct columns
+    galpos_ra = np.array(query['x'])[this_exposure]
+    galpos_dec = np.array(query['y'])[this_exposure]
+    print galpos_ra
+    print galpos_dec
+    raw_input()
 
     # Initial guess for model is real img without SN
     test = GalsimKernel( real_img_without_SN, real_img_without_SN
-                                            , file_path = image_dir
-                                            , psf_file = psf_file
+                                            , psf_file = psf_file_full
                                             , outdir = outdir 
+                                            , galpos_ra = galpos_ra
+                                            , galpos_dec = galpos_dec
                                             )
     
     test.run()
