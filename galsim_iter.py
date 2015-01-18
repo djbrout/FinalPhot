@@ -62,10 +62,10 @@ class GalsimKernel:
         self.SN_RA_guess = SN_RA_guess
         self.SN_DEC_guess = SN_DEC_guess
 
-        self.galpos_ra = galpos_ra
-        self.galpos_dec = galpos_dec
-        self.stamp_RA = stamp_RA
-        self.stamp_DEC = stamp_DEC
+        self.galpos_ra = float( galpos_ra )
+        self.galpos_dec = float( galpos_dec )
+        self.stamp_RA = float( stamp_RA )
+        self.stamp_DEC = float( stamp_DEC )
 
         self.satisfactory = satisfactory
 
@@ -100,10 +100,10 @@ class GalsimKernel:
         full_real_data_image = galsim.fits.read( real_img_file )
         
         # Chop out real data stamp NEED TO DOUBLE CHECK RA VS DEC.
-        self.real_data_stamp = full_real_data_image[ galsim.BoundsI( self.galpos_ra-self.stamp_RA 
-                                                                    ,self.galpos_ra+self.stamp_RA
-                                                                    ,self.galpos_dec-self.stamp_DEC 
-                                                                    ,self.galpos_dec+self.stamp_DEC 
+        self.real_data_stamp = full_real_data_image[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA ) 
+                                                                    ,int( self.galpos_ra+self.stamp_RA )
+                                                                    ,int( self.galpos_dec-self.stamp_DEC )
+                                                                    ,int( self.galpos_dec+self.stamp_DEC )
                                                                     ) ]
         real_data_filename = 'test_data_out.fits'
         real_data_file_out = os.path.join( self.outdir, real_data_filename )
@@ -275,8 +275,8 @@ if __name__=='__main__':
     psf_file = real_img_without_SN.split('.')[0]+'.psf'
     this_exposure = query_wheres[0]
     #Need to double check x and y are correct columns
-    galpos_ra = np.array(query['RA'])[this_exposure]
-    galpos_dec = np.array(query['Dec'])[this_exposure]
+    galpos_ra = np.array(query['x'])[this_exposure] #in pixels
+    galpos_dec = np.array(query['y'])[this_exposure] #in pixels
     print galpos_ra
     print galpos_dec
     print real_img_without_SN
