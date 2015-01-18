@@ -230,6 +230,9 @@ def read_query( file, image_dir ):
     query_wheres = []
     image_paths = []
     for exposure in np.unique( exposures ):
+        print 'exposure '+str(exposure)
+        print 'images'
+        print images
         query_wheres.append( [ exposures == exposure ] )
         image_paths.append( images[ exposure_nums.index( str(int(exposure) ) ) ] ) 
         #match up with a .fits file
@@ -240,6 +243,7 @@ def read_query( file, image_dir ):
 def get_all_image_names( image_dir ):
     images = []
     exposure_nums = []
+    print image_dir
     for (dir, _, files) in os.walk( image_dir ):
         for f in files:
             path = os.path.join(dir, f)
@@ -265,10 +269,11 @@ if __name__=='__main__':
     #psf_file = 'SNp1_228717_SN-E1_tile20_g_01.psf'
     #psf_file_full = os.path.join(image_dir, psf_file)
     outdir = '/global/u1/d/dbrout/FinalPhot/out'
-    query_file = './queries/test.txt'
+    query_file = './queries/test2.txt'
 
     print 'Started Reading'
     query, query_wheres, image_paths = read_query( query_file, image_dir )
+
 
     #Start by online looking at one image, one exposure
     real_img_without_SN = image_paths[0]
@@ -277,6 +282,10 @@ if __name__=='__main__':
     #Need to double check x and y are correct columns
     galpos_ra = np.array(query['x'])[this_exposure] #in pixels
     galpos_dec = np.array(query['y'])[this_exposure] #in pixels
+    
+    #galpos_ra = 100
+    #galpos_dec = 100
+
     print galpos_ra
     print galpos_dec
     print real_img_without_SN
