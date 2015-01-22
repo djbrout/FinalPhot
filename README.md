@@ -8,6 +8,8 @@ Images are located in /global/scratch2/sd/dbrout/SN_images/
 
 TO DO LIST:
 -----------
+* Check that it is correctly on top of a galaxy
+
 * Need to convert galpos_ra and galpos_dec from sky pos to pixels
 * Allow GalsimKernel to accept arrays of galpos_ra's and decs
 * Double check stamp to see if it is correctly centered on galaxy
