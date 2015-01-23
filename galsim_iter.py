@@ -228,34 +228,50 @@ class GalsimKernel:
 def read_query( file, image_dir ):
     query = rdcol.read( file, 1, 2, '\t')
     images, exposure_nums = get_all_image_names( image_dir )
+    #print np.array( query['Exposure'] )
+    #raw_input()
+    #print exposure_nums
+    #raw_input()
     exposures = np.array( query['Exposure'] )
 
-    query_wheres = []
+
     image_paths = []
+    exposures_ = []
+    
+    query_wheres = {}
+
+    #print exposures
+    #print 'hehe'
+    #raw_input()
     for exposure in np.unique( exposures ):
-        print 'exposure '+str(exposure)
-        print 'images'
-        print images
-        query_wheres.append( [ exposures == exposure ] )
+        #print 'exposure '+str(exposure)
+        #print 'image path'
+        #print images
+        query_wheres[ exposure ] = [ exposures == exposure ]
         image_paths.append( images[ exposure_nums.index( str(int(exposure) ) ) ] ) 
+        #print  images[ exposure_nums.index( str(int(exposure) ) ) ]
+        
+        exposures_.append( exposure )
         #match up with a .fits file
+    
     print 'Made Image Arrays'
-    return query, query_wheres, image_paths
+    return query, query_wheres, image_paths, exposures
 
 
 def get_all_image_names( image_dir ):
     images = []
     exposure_nums = []
     print image_dir
+    
     for (dir, _, files) in os.walk( image_dir ):
         for f in files:
-            path = os.path.join(dir, f)
-            if os.path.exists(path):
-                if path.split('.')[-1] == 'fits':
-                    if len(path.split('+')) == 1:
-                        if len(path.split('.')) == 2:
+            path = os.path.join( dir, f )
+            if os.path.exists( path ):
+                if path.split( '.' )[ -1 ] == 'fits':
+                    if len( path.split( '+' ) ) == 1:
+                        if len( path.split('.') ) == 2:
                             try:
-                                exposure_nums.append(path.split('/')[-1].split('_')[1])
+                                exposure_nums.append( path.split( '/' )[ -1 ].split( '_' )[ 1 ] )
                                 images.append(path)
                             except IndexError:
                                 a = 'Image Doesnt Belong'
@@ -272,27 +288,29 @@ if __name__=='__main__':
     #psf_file = 'SNp1_228717_SN-E1_tile20_g_01.psf'
     #psf_file_full = os.path.join(image_dir, psf_file)
     outdir = '/global/u1/d/dbrout/FinalPhot/out'
-    query_file = './queries/test2.txt'
+    query_file = './queries/test.txt'
 
     print 'Started Reading'
-    query, query_wheres, image_paths = read_query( query_file, image_dir )
+    query, query_wheres, image_paths, exposures = read_query( query_file, image_dir )
 
 
     #Start by online looking at one image, one exposure
+    #print image_paths
+    #raw_input()
+    #print exposures
     real_img_without_SN = image_paths[0]
     psf_file = real_img_without_SN.split('.')[0]+'.psf'
-    this_exposure = query_wheres[0]
+    this_exposure = query_wheres[exposures[0]]
     #Need to double check x and y are correct columns
     galpos_ra = np.array(query['x'])[this_exposure] #in pixels
     galpos_dec = np.array(query['y'])[this_exposure] #in pixels
-    
-    #galpos_ra = 100
-    #galpos_dec = 100
+
 
     print galpos_ra
     print galpos_dec
     print real_img_without_SN
     print psf_file
+    #raw_input()
 
     # Initial guess for model is real img without SN
     test = GalsimKernel( real_img_without_SN, real_img_without_SN
