@@ -16,6 +16,7 @@ After looking at the corresponding pixel values and stamping out a 32x32 image, 
 I have verified that it is correcty zooming in on the correct pixel values given by the query in the link above (1416, 1409).
 
 The .fits of this exposure is located here: 
+
 /global/scratch2/sd/dbrout/SN_images/20131028_SN-E1/g_01/SNp1_247897_SN-E1_tile20_g_01.fits
 
 You can verify by eye that there is no galaxy centered at pixel values (1416, 1409)
