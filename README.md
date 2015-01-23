@@ -24,6 +24,14 @@ You can verify by eye that there is no galaxy centered at pixel values (1416, 14
 ![alt tag](https://raw.github.com/djbrout/FinalPhot/master/readme_files/update1.png)
 
 
+Speed:
+======
+
+At the moment, the code takes 15 seconds to run, but all of that time is taken up by this line of code within the kernel:
+
+self.gal_model = galsim.InterpolatedImage( image = self.im, x_interpolant = 'linear' )
+
+
 TO DO LIST:
 -----------
 * Check that it is correctly on top of a galaxy
