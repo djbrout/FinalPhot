@@ -4,7 +4,6 @@ This is the code suite test environment to ultimately be used for
 *DES Final Photometry: Supernova Fluxes*
 by Dillon Brout: dbrout@physics.upenn.edu.
 
-Images are located in /global/scratch2/sd/dbrout/SN_images/
 
 PROGRESS:
 =========
