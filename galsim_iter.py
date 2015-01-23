@@ -47,6 +47,8 @@ class GalsimKernel:
 
 
         real_img_file = os.path.join( file_path, real_img )
+        print 'REAL IMAGE file'
+        print real_img_file
         model_img_file = os.path.join( file_path, real_img )
         self.DES_PSFEx_file = os.path.join( file_path, psf_file )
 
@@ -100,12 +102,11 @@ class GalsimKernel:
         full_real_data_image = galsim.fits.read( real_img_file )
         
         # Chop out real data stamp NEED TO DOUBLE CHECK RA VS DEC.
-        #self.real_data_stamp = full_real_data_image[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA ) 
-        self.real_data_stamp = full_real_data_image
-        #                                                            ,int( self.galpos_ra+self.stamp_RA )
-        #                                                            ,int( self.galpos_dec-self.stamp_DEC )
-        #                                                            ,int( self.galpos_dec+self.stamp_DEC )
-        #                                                            ) ]
+        self.real_data_stamp = full_real_data_image[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA ) 
+                                                                    ,int( self.galpos_ra+self.stamp_RA )
+                                                                    ,int( self.galpos_dec-self.stamp_DEC )
+                                                                    ,int( self.galpos_dec+self.stamp_DEC )
+                                                                    ) ]
         real_data_filename = 'test_data_out.fits'
         real_data_file_out = os.path.join( self.outdir, real_data_filename )
         self.real_data_stamp.write( real_data_file_out )
