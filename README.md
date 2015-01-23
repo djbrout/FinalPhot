@@ -9,7 +9,7 @@ Images are located in /global/scratch2/sd/dbrout/SN_images/
 PROGRESS:
 =========
 
-![alt tag](http://url/to/img.png)
+![alt tag](./update1.png)
 
 
 TO DO LIST:
