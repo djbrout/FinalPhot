@@ -6,6 +6,12 @@ by Dillon Brout: dbrout@physics.upenn.edu.
 
 Images are located in /global/scratch2/sd/dbrout/SN_images/
 
+PROGRESS:
+=========
+
+![alt tag](http://url/to/img.png)
+
+
 TO DO LIST:
 -----------
 * Check that it is correctly on top of a galaxy
