@@ -9,6 +9,10 @@ Images are located in /global/scratch2/sd/dbrout/SN_images/
 PROGRESS:
 =========
 
+Currently I'm looking at the first exposure (247897) of galaxy DES13E1sae found here http://dessne.cosmology.illinois.edu/SNWG/web/display/examineCand.php?Name=DES13E1sae
+
+After looking at the corresponding pixel values and stamping out a 32x32 image, I'm finding that there is no galaxy in this area. See image below. 
+
 ![alt tag](https://raw.github.com/djbrout/FinalPhot/master/readme_files/update1.png)
 
 
