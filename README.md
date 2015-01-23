@@ -31,9 +31,11 @@ At the moment, the code takes 15 seconds to run, but all of that time is taken u
 
 self.gal_model = galsim.InterpolatedImage( image = self.im, x_interpolant = 'linear' )
 
+I need to figure out if its necessary to remake the model each time using this code, or if its possible to alter the pixel values of the model without regenerating the interpolated image... Not likely...
+
 
 TO DO LIST:
------------
+===========
 * Check that it is correctly on top of a galaxy
 
 * Allow GalsimKernel to accept arrays of galpos_ra's and decs
