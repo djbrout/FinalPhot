@@ -11,7 +11,9 @@ PROGRESS:
 
 Currently I'm looking at the first exposure (247897) of galaxy DES13E1sae found here http://dessne.cosmology.illinois.edu/SNWG/web/display/examineCand.php?Name=DES13E1sae
 
-After looking at the corresponding pixel values and stamping out a 32x32 image, I'm finding that there is no galaxy in this area. See image below. 
+After looking at the corresponding pixel values and stamping out a 32x32 image, I'm finding that there is no galaxy in this area. See image below.
+
+I have verified that it is correcty zooming in on the correct pixel values given by the query in the link above (1416, 1409).
 
 ![alt tag](https://raw.github.com/djbrout/FinalPhot/master/readme_files/update1.png)
 
