@@ -227,12 +227,13 @@ class GalsimKernel:
 
 def read_query( file, image_dir ):
     query = rdcol.read( file, 1, 2, '\t')
-    images, exposure_nums = get_all_image_names( image_dir )
+    images, exposure_nums, field_ccds = get_all_image_names( image_dir )
     #print np.array( query['Exposure'] )
     #raw_input()
     #print exposure_nums
     #raw_input()
     exposures = np.array( query['Exposure'] )
+    ccds = np.array( query['Field-CCD'], dtype= 'string' )
 
 
     image_paths = []
@@ -244,15 +245,29 @@ def read_query( file, image_dir ):
     #print 'hehe'
     #raw_input()
     for exposure in np.unique( exposures ):
-        #print 'exposure '+str(exposure)
-        #print 'image path'
-        #print images
-        query_wheres[ exposure ] = [ exposures == exposure ]
-        image_paths.append( images[ exposure_nums.index( str(int(exposure) ) ) ] ) 
-        #print  images[ exposure_nums.index( str(int(exposure) ) ) ]
+        for ccd in np.unique( ccds ):
+            this_ccd = int(ccd.split('-')[-1])
+            #print 'exposure '+str(int(exposure))
+            #print 'ccd ' + str(this_ccd)
+            #print 'image path'
+            #print images
+
+            #print (exposure_nums == str(int(exposure))) & (field_ccds == this_ccd)
+            #print images[10]
+            #raw_input()
+            #print images[(exposure_nums == str(int(exposure))) & (field_ccds == this_ccd)]
+            #print ccds[(exposures == exposure) & (ccds == ccd)]
+            query_wheres[ exposure ] = [ (exposures == exposure) & (ccds == ccd) ]
+
+            #print exposure_nums == int(exposure)
+            #print exposure_nums[exposure_nums == int(exposure)]
+            #print field_ccds[field_ccds == this_ccd]
+            image_paths.append( images[ (exposure_nums == str(int(exposure))) & (field_ccds == this_ccd) ]) 
+
+            #print  images[ exposure_nums.index( str(int(exposure) ) ) ]
         
-        exposures_.append( exposure )
-        #match up with a .fits file
+            #exposures_.append( exposure )
+            #match up with a .fits file
     
     print 'Made Image Arrays'
     return query, query_wheres, image_paths, exposures
@@ -261,6 +276,8 @@ def read_query( file, image_dir ):
 def get_all_image_names( image_dir ):
     images = []
     exposure_nums = []
+    field_ccds = []
+
     print image_dir
     
     for (dir, _, files) in os.walk( image_dir ):
@@ -271,6 +288,7 @@ def get_all_image_names( image_dir ):
                     if len( path.split( '+' ) ) == 1:
                         if len( path.split('.') ) == 2:
                             try:
+                                field_ccds.append( path.split( '/' )[ -2 ].split( '_' )[ 1 ] )
                                 exposure_nums.append( path.split( '/' )[ -1 ].split( '_' )[ 1 ] )
                                 images.append(path)
                             except IndexError:
@@ -279,7 +297,7 @@ def get_all_image_names( image_dir ):
                             #/path_to_file/SNp1_228717_SN-E1_tile20_g_01.fits
 
     print 'Got Images'
-    return images, exposure_nums
+    return np.array(images,dtype='string'), np.array(exposure_nums), np.array(field_ccds,dtype='int')
 
 if __name__=='__main__':
     image_dir = '/global/scratch2/sd/dbrout/'
@@ -298,12 +316,14 @@ if __name__=='__main__':
     #print image_paths
     #raw_input()
     #print exposures
-    real_img_without_SN = image_paths[0]
+    real_img_without_SN = str(image_paths[0]).strip('[').strip(']').replace("'",'')
     psf_file = real_img_without_SN.split('.')[0]+'.psf'
-    this_exposure = query_wheres[exposures[0]]
+    this_exposure_and_ccd = query_wheres[exposures[0]]
+    print real_img_without_SN
+    print psf_file
     #Need to double check x and y are correct columns
-    galpos_ra = np.array(query['x'])[this_exposure] #in pixels
-    galpos_dec = np.array(query['y'])[this_exposure] #in pixels
+    galpos_ra = np.array(query['x'])[this_exposure_and_ccd] #in pixels
+    galpos_dec = np.array(query['y'])[this_exposure_and_ccd] #in pixels
 
 
     print galpos_ra
