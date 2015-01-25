@@ -10,17 +10,17 @@ PROGRESS:
 
 Currently I'm looking at the first exposure (247897) of galaxy DES13E1sae found here http://dessne.cosmology.illinois.edu/SNWG/web/display/examineCand.php?Name=DES13E1sae
 
-After looking at the corresponding pixel values (1416, 1409), I'm finding that there is no galaxy in this area. See image below. (left full image, right 32x32 stamp at centered at given pixel values)
-
 I have verified that it is correcty zooming in on the correct pixel values given by the query in the link above (1416, 1409).
+
+In the image shown below you can see the input model (left) which was initialized to be the "real" observed image. You can also see the output simulated image given by the psf convolution used in Galsim (right).
+
+It seems odd that the location of the galaxy has moved slightly when comparing the input model (left) to the output of the simulation (right). Maybe its an artifact of accidentally flipping the image when feeding RA pixels and DEC pixels into galsim incorrectly.
 
 The .fits of this exposure is located here: 
 
-/global/scratch2/sd/dbrout/SN_images/20131028_SN-E1/g_01/SNp1_247897_SN-E1_tile20_g_01.fits
+/global/scratch2/sd/dbrout/SN_images/20131028_SN-E1/g_05/SNp1_247897_SN-E1_tile20_g_05.fits
 
-You can verify by eye that there is no galaxy centered at pixel values (1416, 1409)
-
-![alt tag](https://raw.github.com/djbrout/FinalPhot/master/readme_files/update1.png)
+![alt tag](https://raw.github.com/djbrout/FinalPhot/master/readme_files/update2.png)
 
 
 Speed:
