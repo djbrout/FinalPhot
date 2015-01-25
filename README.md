@@ -12,7 +12,7 @@ Currently I'm looking at the first exposure (247897) of galaxy DES13E1sae found 
 
 I have verified that it is correcty zooming in on the correct pixel values given by the query in the link above and NOW IN THE CORRECT CCD = 5 (1416, 1409).
 
-In the image shown below you can see the input model (left) which was initialized to be the "real" observed image. You can also see the output simulated image given by the psf convolution used in Galsim (right).
+In the 32x32 stamps shown below you can see the input model (left) which was initialized to be the "real" observed image. You can also see the output simulated image given by the psf convolution used in Galsim (right).
 
 It seems odd that the location of the galaxy has moved slightly when comparing the input model (left) to the output of the simulation (right). Maybe its an artifact of accidentally flipping the image when feeding RA pixels and DEC pixels into galsim incorrectly.
 
