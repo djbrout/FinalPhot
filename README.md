@@ -37,7 +37,7 @@ TO DO LIST:
 ===========
 * Figure out why galsim is not zooming in on correct galaxy. The real stamp is working though...
 
-* figure out how to adjust without drawing...
+* figure out how to adjust without drawing and interpolating
 
 * Implement adjust_model()
 
