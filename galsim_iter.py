@@ -318,7 +318,7 @@ if __name__=='__main__':
     #raw_input()
     #print exposures
 
-    image_num = 22
+    image_num = 26
 
     real_img_without_SN = str(image_paths[image_num]).strip('[').strip(']').replace("'",'')
     psf_file = real_img_without_SN.split('.')[0]+'.psf'
@@ -326,8 +326,8 @@ if __name__=='__main__':
     print real_img_without_SN
     print psf_file
     #Need to double check x and y are correct columns
-    galpos_ra = np.array(query['y'])[this_exposure_and_ccd] #in pixels
-    galpos_dec = np.array(query['x'])[this_exposure_and_ccd] #in pixels
+    galpos_ra = np.array(query['x'])[this_exposure_and_ccd] #in pixels
+    galpos_dec = np.array(query['y'])[this_exposure_and_ccd] #in pixels
 
 
     print galpos_ra
