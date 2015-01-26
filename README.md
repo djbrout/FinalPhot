@@ -14,7 +14,7 @@ I have verified that it is correcty zooming in on the correct pixel values given
 
 In the 32x32 stamps shown below you can see the input model (left) which was initialized to be the "real" observed image. You can also see the output simulated image given by the psf convolution used in Galsim (right).
 
-It seems odd that the location of the galaxy has moved slightly when comparing the input model (left) to the output of the simulation (right). Maybe its an artifact of accidentally flipping the image when feeding RA pixels and DEC pixels into galsim incorrectly.
+It seems odd that the location of the galaxy has moved slightly when comparing the input model (left) to the output of the simulation (right). After looking at further exposures, it appears that the galsim is not zooming in correctly on the same galaxy. Need to address this.
 
 The .fits of this exposure is located here: 
 
@@ -35,7 +35,7 @@ I need to figure out if its necessary to remake the model each time using this c
 
 TO DO LIST:
 ===========
-* Check that it is correctly on top of a galaxy
+* Figure out why galsim is not zooming in on correct galaxy. The real stamp is working though...
 
 * Allow GalsimKernel to accept arrays of galpos_ra's and decs
 
