@@ -49,6 +49,7 @@ class GalsimKernel:
         real_img_file = os.path.join( file_path, real_img )
         print 'REAL IMAGE file'
         print real_img_file
+        raw_input()
         model_img_file = os.path.join( file_path, real_img )
         self.DES_PSFEx_file = os.path.join( file_path, psf_file )
 
@@ -316,14 +317,17 @@ if __name__=='__main__':
     #print image_paths
     #raw_input()
     #print exposures
-    real_img_without_SN = str(image_paths[0]).strip('[').strip(']').replace("'",'')
+
+    image_num = 0
+
+    real_img_without_SN = str(image_paths[image_num]).strip('[').strip(']').replace("'",'')
     psf_file = real_img_without_SN.split('.')[0]+'.psf'
-    this_exposure_and_ccd = query_wheres[exposures[0]]
+    this_exposure_and_ccd = query_wheres[exposures[image_num]]
     print real_img_without_SN
     print psf_file
     #Need to double check x and y are correct columns
-    galpos_ra = np.array(query['y'])[this_exposure_and_ccd] #in pixels
-    galpos_dec = np.array(query['x'])[this_exposure_and_ccd] #in pixels
+    galpos_ra = np.array(query['x'])[this_exposure_and_ccd] #in pixels
+    galpos_dec = np.array(query['y'])[this_exposure_and_ccd] #in pixels
 
 
     print galpos_ra
