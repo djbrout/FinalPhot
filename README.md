@@ -37,15 +37,16 @@ TO DO LIST:
 ===========
 * Figure out why galsim is not zooming in on correct galaxy. The real stamp is working though...
 
-* Allow GalsimKernel to accept arrays of galpos_ra's and decs
+* figure out how to adjust without drawing...
 
-* Double check stamp to see if it is correctly centered on galaxy
+* Implement adjust_model()
+
+* Allow GalsimKernel to accept arrays of galpos_ra's and decs
 
 * Figure out how to ravel the Galsim image
 
 * Implement pixelize image
 
-* Implement adjust_model()
 
 * How do I know which images are pre-post SN?
 
