@@ -322,8 +322,8 @@ if __name__=='__main__':
     print real_img_without_SN
     print psf_file
     #Need to double check x and y are correct columns
-    galpos_ra = np.array(query['x'])[this_exposure_and_ccd] #in pixels
-    galpos_dec = np.array(query['y'])[this_exposure_and_ccd] #in pixels
+    galpos_ra = np.array(query['y'])[this_exposure_and_ccd] #in pixels
+    galpos_dec = np.array(query['x'])[this_exposure_and_ccd] #in pixels
 
 
     print galpos_ra
