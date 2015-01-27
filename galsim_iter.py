@@ -47,9 +47,6 @@ class GalsimKernel:
 
 
         real_img_file = os.path.join( file_path, real_img )
-        print 'REAL IMAGE file'
-        print real_img_file
-        raw_input()
         model_img_file = os.path.join( file_path, real_img )
         self.DES_PSFEx_file = os.path.join( file_path, psf_file )
 
@@ -89,7 +86,8 @@ class GalsimKernel:
         self.psf_model = galsim.des.DES_PSFEx( self.DES_PSFEx_file, wcs=self.wcs)
 
         # position of galaxy in original image. (pixels) (doesnt iterate) NEED TO FIGURE OUT RA VS DEC
-        self.image_pos = galsim.PositionD( self.galpos_ra, self.galpos_dec )
+        self.image_pos = galsim.PositionD( self.galpos_dec, self.galpos_ra )
+        #self.image_pos = galsim.PositionD( self.galpos_ra, self.galpos_dec )
 
         # We just care about psf locally at the image pos
         self.psf = self.psf_model.getPSF( self.image_pos )
@@ -106,7 +104,7 @@ class GalsimKernel:
         self.real_data_stamp = full_real_data_image[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA ) 
                                                                     ,int( self.galpos_ra+self.stamp_RA )
                                                                     ,int( self.galpos_dec-self.stamp_DEC )
-                                                                    ,int( self.galpos_dec+self.stamp_DEC )
+                                                                    ,int( self.galpos_dec+self.stamp_DEC ) + 24
                                                                     ) ]
         real_data_filename = 'test_data_out.fits'
         real_data_file_out = os.path.join( self.outdir, real_data_filename )
@@ -115,7 +113,7 @@ class GalsimKernel:
         self.real_stamp_array = self.real_stamp.ravel()
         print 'real_stamp '+str(self.real_stamp.shape)
         print 'Done Innitting'
-        raw_input()
+        #raw_input()
 
     """
     This will manage the iterating process
@@ -131,8 +129,8 @@ class GalsimKernel:
             print 'Done adjusting model'
             self.kernel()
             print 'Executed Kernel'
-            correlation = self.compare_model_and_sim()
-            print 'Correlated ' + str( correlation )
+            #correlation = self.compare_model_and_sim()
+            #print 'Correlated ' + str( correlation )
 
 
     """                                                                                                                                    
