@@ -107,13 +107,12 @@ class GalsimKernel:
         full_real_data_image = galsim.fits.read( real_img_file )
         
         # Chop out real data stamp NEED TO DOUBLE CHECK RA VS DEC.
-        '''self.real_data_stamp = full_real_data_image[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA ) 
+        self.real_data_stamp = full_real_data_image[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA ) 
                                                                     ,int( self.galpos_ra+self.stamp_RA )
                                                                     ,int( self.galpos_dec-self.stamp_DEC )
-                                                                    ,int( self.galpos_dec+self.stamp_DEC ) + 24
+                                                                    ,int( self.galpos_dec+self.stamp_DEC )
                                                                     ) ]
-        '''
-        self.real_data_stamp = full_real_data_image
+        
         real_data_filename = 'test_data_out.fits'
         real_data_file_out = os.path.join( self.outdir, real_data_filename )
         self.real_data_stamp.write( real_data_file_out )
@@ -137,8 +136,8 @@ class GalsimKernel:
             print 'Done adjusting model'
             self.kernel()
             print 'Executed Kernel'
-            #correlation = self.compare_model_and_sim()
-            #print 'Correlated ' + str( correlation )
+            correlation = self.compare_model_and_sim()
+            print 'Correlated ' + str( correlation )
 
 
     """                                                                                                                                    
