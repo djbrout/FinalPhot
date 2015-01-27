@@ -55,9 +55,14 @@ class GalsimKernel:
         self.outdir = outdir
 
 
-        self.real_img = pf.open( real_img_file )[0].data
+        self.real_fits = pf.open( real_img_file )
+        self.real_img = self.real_fits[0].data
+        self.real_header = self.real_fits[0].header
         self.model_img = pf.open( real_img_file )[0].data
-        
+       
+        self.pixel_scale = self.real_header['PIXSCAL1']
+        self.pixel_scale = 0.2634
+
         self.SN_flux = SN_flux_guess
         self.SN_RA_guess = SN_RA_guess
         self.SN_DEC_guess = SN_DEC_guess
@@ -82,6 +87,7 @@ class GalsimKernel:
         #get wcs information from real data file (this doesnt change as model changes)                                                
         self.wcs = galsim.FitsWCS( real_img_file )
 
+
         # Get psf over the entire ccd
         self.psf_model = galsim.des.DES_PSFEx( self.DES_PSFEx_file, wcs=self.wcs)
 
@@ -101,11 +107,13 @@ class GalsimKernel:
         full_real_data_image = galsim.fits.read( real_img_file )
         
         # Chop out real data stamp NEED TO DOUBLE CHECK RA VS DEC.
-        self.real_data_stamp = full_real_data_image[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA ) 
+        '''self.real_data_stamp = full_real_data_image[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA ) 
                                                                     ,int( self.galpos_ra+self.stamp_RA )
                                                                     ,int( self.galpos_dec-self.stamp_DEC )
                                                                     ,int( self.galpos_dec+self.stamp_DEC ) + 24
                                                                     ) ]
+        '''
+        self.real_data_stamp = full_real_data_image
         real_data_filename = 'test_data_out.fits'
         real_data_file_out = os.path.join( self.outdir, real_data_filename )
         self.real_data_stamp.write( real_data_file_out )
@@ -140,13 +148,15 @@ class GalsimKernel:
         t1 = time.time()
         print 'creating galsim image'
         # Convert model to galsim image
-        self.im = galsim.Image( array = self.model, scale = 0.5 ) # scale is arcsec/pixel
+        self.im = galsim.Image( array = self.model, scale = self.pixel_scale ) # scale is arcsec/pixel
 
         t2 = time.time()
         print t2-t1
         print 'creating gal_model'
         # Create interpolated image (can mess around with interp methods...)
-        self.gal_model = galsim.InterpolatedImage( image = self.im, x_interpolant = 'linear' )
+        #big_fft_params = galsim.GSParams(maximum_fft_size=10240)
+
+        self.gal_model = galsim.InterpolatedImage( image = self.im, x_interpolant = 'linear')
 
 
         t3 = time.time()
@@ -171,6 +181,11 @@ class GalsimKernel:
         print t6-t5
         print 'drawing'
         self.final_out_image = self.final.drawImage( image = self.sim_stamp )
+        #self.final_out_image = self.gal_model.drawImage()
+
+
+
+
 
         t7 = time.time()
         print t7-t6
