@@ -93,8 +93,8 @@ class GalsimKernel:
         self.psf_model = galsim.des.DES_PSFEx( self.DES_PSFEx_file, wcs=self.wcs)
 
         # position of galaxy in original image. (pixels) (doesnt iterate) NEED TO FIGURE OUT RA VS DEC
-        self.image_pos = galsim.PositionD( self.galpos_dec, self.galpos_ra )
-        #self.image_pos = galsim.PositionD( self.galpos_ra, self.galpos_dec )
+        #self.image_pos = galsim.PositionD( self.galpos_dec, self.galpos_ra )
+        self.image_pos = galsim.PositionD( self.galpos_ra, self.galpos_dec )
 
         # We just care about psf locally at the image pos
         self.psf = self.psf_model.getPSF( self.image_pos )
