@@ -21,6 +21,9 @@ The .fits of this exposure is located here:
 
 /global/scratch2/sd/dbrout/SN_images/20131028_SN-E1/g_05/SNp1_247897_SN-E1_tile20_g_05.fits
 
+INPUT (LEFT) OUTPUT (RIGHT):
+============================
+
 ![alt tag](https://raw.github.com/djbrout/FinalPhot/master/readme_files/galsim_problem1.png)
 
 
