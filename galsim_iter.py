@@ -40,7 +40,7 @@ class GalsimKernel:
                  , SN_flux_guess = 0.0
                  , satisfactory = .8 # process is iterated until correlation reaches this value
                  , stamp_RA = 500
-                 , stamp_DEC = 1000
+                 , stamp_DEC = 500
                  , psf_file = ''
                  , outdir = None
                  ):
@@ -333,7 +333,7 @@ if __name__=='__main__':
     #raw_input()
     #print exposures
 
-    image_num = 0
+    image_num = 10
 
     real_img_without_SN = str(image_paths[image_num]).strip('[').strip(']').replace("'",'')
     psf_file = real_img_without_SN.split('.')[0]+'.psf'
