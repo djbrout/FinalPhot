@@ -13,7 +13,9 @@ Currently I'm looking at the first exposure (247897) of galaxy DES13E1sae found 
 I have verified that the __REAL__ data stamp is correcty zooming in on the galaxy with pixel values given by the query in the link above (1416, 1409).
 
 
-In the stamps shown below I have zoomed out in order to see the descrepancy between the galsim input (left) and output convolved with psf (right).
+In the stamps shown below I have zoomed out in order to see the descrepancy between the galsim input (__left__) and output convolved with psf (__right__).
+
+__Please see line 62 of galsim_iter.py which ensures that the model input file is the same as the real data.__
 
 The .fits of this exposure is located here: 
 
