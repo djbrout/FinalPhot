@@ -58,8 +58,9 @@ class GalsimKernel:
         self.real_fits = pf.open( real_img_file )
         self.real_img = self.real_fits[0].data
         self.real_header = self.real_fits[0].header
-        self.model_img = pf.open( real_img_file )[0].data
-       
+        #self.model_img = pf.open( model_img_file )[0].data
+        self.model_img = self.real_img
+
         self.pixel_scale = self.real_header['PIXSCAL1']
         self.pixel_scale = 0.2634
 
