@@ -39,8 +39,8 @@ class GalsimKernel:
                  , SN_DEC_guess = 0 # arsec from center of entire image (not stamp)
                  , SN_flux_guess = 0.0
                  , satisfactory = .8 # process is iterated until correlation reaches this value
-                 , stamp_RA = 32
-                 , stamp_DEC = 32
+                 , stamp_RA = 200
+                 , stamp_DEC = 200
                  , psf_file = ''
                  , outdir = None
                  ):
@@ -153,7 +153,7 @@ class GalsimKernel:
         print t2-t1
         print 'creating gal_model'
         # Create interpolated image (can mess around with interp methods...)
-        #big_fft_params = galsim.GSParams(maximum_fft_size=10240)
+        big_fft_params = galsim.GSParams(maximum_fft_size=10240)
 
         self.gal_model = galsim.InterpolatedImage( image = self.im, x_interpolant = 'linear')
 
@@ -169,7 +169,8 @@ class GalsimKernel:
         print 'convolving'
         # Convolve galaxy+sn model with psf
         self.final = galsim.Convolve( [self.total_gal, self.psf], gsparams = self.big_fft_params )
-        
+        #self.final = self.total_gal
+
         t5 = time.time()
         print t5-t4
         print 'stamping'
