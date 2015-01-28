@@ -5,22 +5,23 @@ This is the code suite test environment to ultimately be used for
 by Dillon Brout: dbrout@physics.upenn.edu.
 
 
-PROGRESS:
+PROBLEM:
 =========
 
 Currently I'm looking at the first exposure (247897) of galaxy DES13E1sae found here http://dessne.cosmology.illinois.edu/SNWG/web/display/examineCand.php?Name=DES13E1sae
 
-I have verified that it is correcty zooming in on the correct pixel values given by the query in the link above and NOW IN THE CORRECT CCD = 5 (1416, 1409).
+I have verified that the __REAL__ data stamp is correcty zooming in on the galaxy with pixel values given by the query in the link above (1416, 1409).
 
-In the 32x32 stamps shown below you can see the input model (left) which was initialized to be the "real" observed image. You can also see the output simulated image given by the psf convolution used in Galsim (right).
 
-It seems odd that the location of the galaxy has moved slightly when comparing the input model (left) to the output of the simulation (right). After looking at further exposures, it appears that the galsim is not zooming in correctly on the same galaxy. Need to address this.
+In the stamps shown below I have zoomed out in order to see the descrepancy between the galsim input (__left__) and output convolved with psf (__right__).
+
+__Please see line 62 of galsim_iter.py which ensures that the model input file is the same as the real data.__
 
 The .fits of this exposure is located here: 
 
 /global/scratch2/sd/dbrout/SN_images/20131028_SN-E1/g_05/SNp1_247897_SN-E1_tile20_g_05.fits
 
-![alt tag](https://raw.github.com/djbrout/FinalPhot/master/readme_files/update2.png)
+![alt tag](https://raw.github.com/djbrout/FinalPhot/master/readme_files/galsim_problem1.png)
 
 
 Speed:
