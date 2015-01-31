@@ -39,7 +39,7 @@ class GalsimKernel:
                  , SN_DEC_guess = 0 # arsec from center of entire image (not stamp)
                  , SN_flux_guess = 0.0
                  , satisfactory = .8 # process is iterated until correlation reaches this value
-                 , stamp_RA = 500
+                 , stamp_RA = 600
                  , stamp_DEC = 1000
                  , psf_file = ''
                  , outdir = None
