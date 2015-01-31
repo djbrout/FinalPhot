@@ -62,7 +62,7 @@ class GalsimKernel:
         self.model_img = self.real_img
 
         self.pixel_scale = self.real_header['PIXSCAL1']
-        self.pixel_scale = 0.2634
+        #self.pixel_scale = 0.2634
 
         self.SN_flux = SN_flux_guess
         self.SN_RA_guess = SN_RA_guess
