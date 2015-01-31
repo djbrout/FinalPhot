@@ -39,8 +39,8 @@ class GalsimKernel:
                  , SN_DEC_guess = 0 # arsec from center of entire image (not stamp)
                  , SN_flux_guess = 0.0
                  , satisfactory = .8 # process is iterated until correlation reaches this value
-                 , stamp_RA = 500
-                 , stamp_DEC = 500
+                 , stamp_RA = 50
+                 , stamp_DEC = 50
                  , psf_file = ''
                  , outdir = None
                  ):
@@ -108,13 +108,13 @@ class GalsimKernel:
         full_real_data_image = galsim.fits.read( real_img_file )
         
         # Chop out real data stamp NEED TO DOUBLE CHECK RA VS DEC.
-        '''self.real_data_stamp = full_real_data_image[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA ) 
+        self.real_data_stamp = full_real_data_image[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA ) 
                                                                     ,int( self.galpos_ra+self.stamp_RA )
                                                                     ,int( self.galpos_dec-self.stamp_DEC )
                                                                     ,int( self.galpos_dec+self.stamp_DEC )
                                                                     ) ]
-        '''
-        self.real_data_stamp = full_real_data_image
+        
+        #self.real_data_stamp = full_real_data_image
         real_data_filename = 'test_data_out.fits'
         real_data_file_out = os.path.join( self.outdir, real_data_filename )
         self.real_data_stamp.write( real_data_file_out )
@@ -155,7 +155,7 @@ class GalsimKernel:
         print t2-t1
         print 'creating gal_model'
         # Create interpolated image (can mess around with interp methods...)
-        big_fft_params = galsim.GSParams(maximum_fft_size=10240)
+        self.big_fft_params = galsim.GSParams(maximum_fft_size=10240)
 
         self.gal_model = galsim.InterpolatedImage( image = self.im, x_interpolant = 'linear')
 
@@ -170,8 +170,8 @@ class GalsimKernel:
         print t4-t3
         print 'convolving'
         # Convolve galaxy+sn model with psf
-        self.final = galsim.Convolve( [self.total_gal, self.psf], gsparams = self.big_fft_params )
-        #self.final = self.total_gal
+        self.final_big_fft = galsim.Convolve( [self.total_gal, self.psf], gsparams = self.big_fft_params )
+        #self.final_big_fft = galsim.Convolve([self.total_gal],gsparams=self.big_fft_params)
 
         t5 = time.time()
         print t5-t4
@@ -182,7 +182,8 @@ class GalsimKernel:
         t6 = time.time()
         print t6-t5
         print 'drawing'
-        self.final_out_image = self.final.drawImage( image = self.sim_stamp )
+        #self.sim_stamp_big_fft = galsim.Convolve([self.sim_stamp],gsparams=self.big_fft_params)
+        self.final_out_image = self.final_big_fft.drawImage( image = self.sim_stamp )
         #self.final_out_image = self.gal_model.drawImage()
 
 
@@ -333,7 +334,7 @@ if __name__=='__main__':
     #raw_input()
     #print exposures
 
-    image_num = 10
+    image_num = 0
 
     real_img_without_SN = str(image_paths[image_num]).strip('[').strip(']').replace("'",'')
     psf_file = real_img_without_SN.split('.')[0]+'.psf'
