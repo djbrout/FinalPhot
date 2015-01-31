@@ -334,7 +334,7 @@ if __name__=='__main__':
     #raw_input()
     #print exposures
 
-    image_num = 0
+    image_num = 10
 
     real_img_without_SN = str(image_paths[image_num]).strip('[').strip(']').replace("'",'')
     psf_file = real_img_without_SN.split('.')[0]+'.psf'
