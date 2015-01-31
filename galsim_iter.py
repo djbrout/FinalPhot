@@ -40,7 +40,7 @@ class GalsimKernel:
                  , SN_flux_guess = 0.0
                  , satisfactory = .8 # process is iterated until correlation reaches this value
                  , stamp_RA = 500
-                 , stamp_DEC = 500
+                 , stamp_DEC = 1000
                  , psf_file = ''
                  , outdir = None
                  ):
