@@ -264,7 +264,7 @@ class GalsimKernel:
 
     def pixelize( self, img ):
         print img.shape
-        pix_img, edges = np.histogramdd(img,bins=25)
+        pix_img, edges = np.histogram2d(np.array(img),bins=(5,5))
         return pix_img
 
 def read_query( file, image_dir ):
