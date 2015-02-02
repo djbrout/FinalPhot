@@ -119,7 +119,8 @@ class GalsimKernel:
         self.model_img_pix = self.pixelize( self.model_img )
 
         self.model = np.array( self.model_img_pix, dtype=float )
-
+        self.model = np.ascontiguousarray(self.model.T)
+        #self.model = np.transpose(self.model)
 
         #self.real_data_stamp = full_real_data_image
         real_data_filename = 'test_data_out.fits'
@@ -156,7 +157,6 @@ class GalsimKernel:
         t1 = time.time()
         print 'creating galsim image'
         # Convert model to galsim image
-        #self.im = self.real_data_stamp
         self.im = galsim.Image( array = self.model, scale = self.pixel_scale ) # scale is arcsec/pixel
 
         t2 = time.time()
