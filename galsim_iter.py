@@ -105,10 +105,10 @@ class GalsimKernel:
 
         # Read in real image for comparison to model
         #NEED TO FIGURE OUT HOW/IF THIS NEEDS TO BE PIXELIZED
-        full_real_data_image = galsim.fits.read( real_img_file )
+        self.full_real_data_image = galsim.fits.read( real_img_file )
         
         # Chop out real data stamp NEED TO DOUBLE CHECK RA VS DEC.
-        self.real_data_stamp = full_real_data_image[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA ) 
+        self.real_data_stamp = self.full_real_data_image[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA ) 
                                                                     ,int( self.galpos_ra+self.stamp_RA )
                                                                     ,int( self.galpos_dec-self.stamp_DEC )
                                                                     ,int( self.galpos_dec+self.stamp_DEC )
@@ -182,9 +182,21 @@ class GalsimKernel:
         t6 = time.time()
         print t6-t5
         print 'drawing'
-        #self.sim_stamp_big_fft = galsim.Convolve([self.sim_stamp],gsparams=self.big_fft_params)
-        self.final_out_image = self.final_big_fft.drawImage( image = self.sim_stamp )
-        #self.final_out_image = self.gal_model.drawImage()
+
+        self.sim_filename = 'test_sim_out.fits'
+        self.sim_full_filename = 'test_sim_big_out.fits'
+        self.simoutfile = os.path.join(self.outdir,self.sim_filename)
+        self.simbigoutfile = os.path.join(self.outdir,self.sim_full_filename)
+
+
+        self.final_out_image = self.final_big_fft.drawImage( image = self.sim_stamp, wcs = self.wcs.local(image_pos=self.image_pos) )
+        self.final_out_image.write(file_name = self.simoutfile)
+
+        #self.real_data_stamp.copyFrom(self.final_out_image)
+        #self.full_real_data_image.drawImage(image = self.real_data_stamp)
+        
+        #self.full_real_data_image.write(file_name = self.simbigoutfile)
+        #self.final_out_image = self.final_big_fft.drawImage( image = self.sim_stamp )
 
 
 
@@ -193,9 +205,9 @@ class GalsimKernel:
         t7 = time.time()
         print t7-t6
 
-        self.sim_filename = 'test_sim_out.fits'
-        self.simoutfile = os.path.join(self.outdir,self.sim_filename)
-        self.final_out_image.write(self.simoutfile) # Write to .fits file
+        #self.sim_filename = 'test_sim_out.fits'
+        #self.simoutfile = os.path.join(self.outdir,self.sim_filename)
+        #self.final_out_image.write(self.simoutfile) # Write to .fits file
 
 
     """
