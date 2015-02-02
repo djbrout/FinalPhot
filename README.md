@@ -27,11 +27,7 @@ INPUT (LEFT) OUTPUT (RIGHT):
 Speed:
 ======
 
-At the moment, the code takes 15 seconds to run, but all of that time is taken up by this line of code within the kernel:
-
-self.gal_model = galsim.InterpolatedImage( image = self.im, x_interpolant = 'linear' )
-
-I need to figure out if its necessary to remake the model each time using this code, or if its possible to alter the pixel values of the model without regenerating the interpolated image... Not likely...
+At the moment, the code takes 0.09 seconds to run. 0.08 of that time is taken by Drawing...
 
 
 TO DO LIST:

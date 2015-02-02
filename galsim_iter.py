@@ -140,6 +140,7 @@ class GalsimKernel:
         while correlation < self.satisfactory:
             print 'Press Enter to continue'
             raw_input()
+            t1 = time.time()
             self.adjust_sn()
             print 'Done adjusting SN'
             self.adjust_model() 
@@ -148,7 +149,8 @@ class GalsimKernel:
             print 'Executed Kernel'
             correlation = self.compare_model_and_sim()
             print 'Correlated ' + str( correlation )
-
+            t2 = time.time()
+            print t2-t1
 
     """                                                                                                                                    
     the kernel gets iterated over...                                                                                       
@@ -211,7 +213,7 @@ class GalsimKernel:
 
 
         t7 = time.time()
-        print t7-t6
+        print t7-t1
 
         #self.sim_filename = 'test_sim_out.fits'
         #self.simoutfile = os.path.join(self.outdir,self.sim_filename)
