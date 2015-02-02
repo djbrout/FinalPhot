@@ -126,10 +126,10 @@ class GalsimKernel:
 
         #self.real_data_stamp = full_real_data_image
 
-        self.real_data_stamp_trimmed = full_real_data_image[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA ) + int(self.trim_edges)
-                                                                    ,int( self.galpos_ra+self.stamp_RA ) - int(self.trim_edges)
-                                                                    ,int( self.galpos_dec-self.stamp_DEC ) + int(self.trim_edges)
-                                                                    ,int( self.galpos_dec+self.stamp_DEC ) - int(self.trim_edges)
+        self.real_data_stamp_trimmed = full_real_data_image[ galsim.BoundsI( int(self.galpos_ra) + int( self.trim_edges )
+                                                                    , int(self.galpos_ra) + int(self.stamp_RA*2+1) - int( self.trim_edges )
+                                                                    , int(self.galpos_dec) + int( self.trim_edges )
+                                                                    , int(self.galpos_dec) + int(self.stamp_DEC*2+1) - int( self.trim_edges )
                                                                     ) ]
 
         real_data_filename = 'test_data_out.fits'
