@@ -210,9 +210,9 @@ class GalsimKernel:
 
         self.final_out_image = self.final_big_fft.drawImage( image = self.sim_stamp, wcs = self.wcs.local(image_pos=self.image_pos) )
         
-        self.final_out_image_trimmed = self.final_out_image[galsim.BoundsI( int( self.trim_edges )
+        self.final_out_image_trimmed = self.final_out_image[galsim.BoundsI( int( self.trim_edges ) + 1
                                                                     , int(self.stamp_RA*2+1) - int( self.trim_edges )
-                                                                    , int( self.trim_edges )
+                                                                    , int( self.trim_edges ) + 1
                                                                     , int(self.stamp_DEC*2+1) - int( self.trim_edges )
                                                                     )]
         self.final_out_image_trimmed.write(file_name = self.simoutfile)
