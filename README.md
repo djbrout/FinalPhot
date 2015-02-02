@@ -5,7 +5,7 @@ This is the code suite test environment to ultimately be used for
 by Dillon Brout: dbrout@physics.upenn.edu.
 
 
-PROBLEM:
+Update:
 =========
 
 Currently I'm looking at the first exposure (247897) of galaxy DES13E1sae found here http://dessne.cosmology.illinois.edu/SNWG/web/display/examineCand.php?Name=DES13E1sae
