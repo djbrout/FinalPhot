@@ -113,7 +113,6 @@ class GalsimKernel:
                                                                     ,int( self.galpos_dec-self.stamp_DEC )
                                                                     ,int( self.galpos_dec+self.stamp_DEC )
                                                                     ) ]
-        
         #self.real_data_stamp = full_real_data_image
         real_data_filename = 'test_data_out.fits'
         real_data_file_out = os.path.join( self.outdir, real_data_filename )
@@ -149,7 +148,8 @@ class GalsimKernel:
         t1 = time.time()
         print 'creating galsim image'
         # Convert model to galsim image
-        self.im = galsim.Image( array = self.model, scale = self.pixel_scale ) # scale is arcsec/pixel
+        self.im = self.real_data_stamp
+        #self.im = galsim.Image( array = self.model, scale = self.pixel_scale ) # scale is arcsec/pixel
 
         t2 = time.time()
         print t2-t1
