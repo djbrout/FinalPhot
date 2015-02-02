@@ -75,10 +75,6 @@ class GalsimKernel:
 
         self.satisfactory = satisfactory
 
-        self.model_img_pix = self.pixelize( self.model_img )
-
-        self.model = np.array( self.model_img_pix, dtype=float )
-
         # Create supernova point source (ie. very very small gaussian)
         self.sn = galsim.Gaussian( sigma = 1.e-8, flux = self.SN_flux )
 
@@ -105,14 +101,26 @@ class GalsimKernel:
 
         # Read in real image for comparison to model
         #NEED TO FIGURE OUT HOW/IF THIS NEEDS TO BE PIXELIZED
-        self.full_real_data_image = galsim.fits.read( real_img_file )
+        full_real_data_image = galsim.fits.read( real_img_file )
         
         # Chop out real data stamp NEED TO DOUBLE CHECK RA VS DEC.
-        self.real_data_stamp = self.full_real_data_image[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA ) 
+        self.real_data_stamp = full_real_data_image[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA ) 
                                                                     ,int( self.galpos_ra+self.stamp_RA )
                                                                     ,int( self.galpos_dec-self.stamp_DEC )
                                                                     ,int( self.galpos_dec+self.stamp_DEC )
                                                                     ) ]
+
+        start_model_filename = 'start_model.fits'
+        start_model_out = os.path.join(self.outdir,start_model_filename)
+        self.real_data_stamp.write(start_model_out)
+
+        self.model_img = pf.open(start_model_out)[0].data
+
+        self.model_img_pix = self.pixelize( self.model_img )
+
+        self.model = np.array( self.model_img_pix, dtype=float )
+
+
         #self.real_data_stamp = full_real_data_image
         real_data_filename = 'test_data_out.fits'
         real_data_file_out = os.path.join( self.outdir, real_data_filename )
@@ -137,8 +145,8 @@ class GalsimKernel:
             print 'Done adjusting model'
             self.kernel()
             print 'Executed Kernel'
-            #correlation = self.compare_model_and_sim()
-            #print 'Correlated ' + str( correlation )
+            correlation = self.compare_model_and_sim()
+            print 'Correlated ' + str( correlation )
 
 
     """                                                                                                                                    
@@ -148,8 +156,8 @@ class GalsimKernel:
         t1 = time.time()
         print 'creating galsim image'
         # Convert model to galsim image
-        self.im = self.real_data_stamp
-        #self.im = galsim.Image( array = self.model, scale = self.pixel_scale ) # scale is arcsec/pixel
+        #self.im = self.real_data_stamp
+        self.im = galsim.Image( array = self.model, scale = self.pixel_scale ) # scale is arcsec/pixel
 
         t2 = time.time()
         print t2-t1
@@ -186,7 +194,7 @@ class GalsimKernel:
         self.sim_filename = 'test_sim_out.fits'
         self.sim_full_filename = 'test_sim_big_out.fits'
         self.simoutfile = os.path.join(self.outdir,self.sim_filename)
-        self.simbigoutfile = os.path.join(self.outdir,self.sim_full_filename)
+        #self.simbigoutfile = os.path.join(self.outdir,self.sim_full_filename)
 
 
         self.final_out_image = self.final_big_fft.drawImage( image = self.sim_stamp, wcs = self.wcs.local(image_pos=self.image_pos) )
