@@ -263,6 +263,7 @@ class GalsimKernel:
         return p_value
 
     def pixelize( self, img ):
+        print img.shape
         pix_img, edges = np.histogramdd(img,bins=[5,5])
         return pix_img
 
