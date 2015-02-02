@@ -39,8 +39,8 @@ class GalsimKernel:
                  , SN_DEC_guess = 0 # arsec from center of entire image (not stamp)
                  , SN_flux_guess = 0.0
                  , satisfactory = .8 # process is iterated until correlation reaches this value
-                 , stamp_RA = 32
-                 , stamp_DEC = 32
+                 , stamp_RA = 100
+                 , stamp_DEC = 100
                  , psf_file = ''
                  , outdir = None
                  ):
@@ -357,8 +357,8 @@ if __name__=='__main__':
     galpos_ra = np.array(query['x'])[this_exposure_and_ccd] #in pixels
     galpos_dec = np.array(query['y'])[this_exposure_and_ccd] #in pixels
 
-    galpos_ra = 33
-    galpos_dec = 33
+    #galpos_ra = 33
+    #galpos_dec = 33
 
     print galpos_ra
     print galpos_dec
