@@ -43,7 +43,7 @@ class GalsimKernel:
                  , stamp_DEC = 100
                  , psf_file = ''
                  , outdir = None
-                 , trim_edges = 20 # num pixels
+                 , trim_edges = 1 # num pixels
                  ):
 
 
@@ -91,7 +91,6 @@ class GalsimKernel:
         self.psf_model = galsim.des.DES_PSFEx( self.DES_PSFEx_file, wcs=self.wcs)
 
         # position of galaxy in original image. (pixels) (doesnt iterate) NEED TO FIGURE OUT RA VS DEC
-        #self.image_pos = galsim.PositionD( self.galpos_dec, self.galpos_ra )
         self.image_pos = galsim.PositionD( self.galpos_ra, self.galpos_dec )
 
         # We just care about psf locally at the image pos
@@ -104,12 +103,13 @@ class GalsimKernel:
         # Read in real image for comparison to model
         #NEED TO FIGURE OUT HOW/IF THIS NEEDS TO BE PIXELIZED
         full_real_data_image = galsim.fits.read( real_img_file )
-        
+        #full_real_data_image = pf.open( real_img_file )[0].data
+
         # Chop out real data stamp NEED TO DOUBLE CHECK RA VS DEC.
         self.real_data_stamp = full_real_data_image[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA ) 
-                                                                    ,int( self.galpos_ra+self.stamp_RA )
-                                                                    ,int( self.galpos_dec-self.stamp_DEC )
-                                                                    ,int( self.galpos_dec+self.stamp_DEC )
+                                                                    , int( self.galpos_ra+self.stamp_RA )
+                                                                    , int( self.galpos_dec-self.stamp_DEC )
+                                                                    , int( self.galpos_dec+self.stamp_DEC )
                                                                     ) ]
 
         start_model_filename = 'start_model.fits'
@@ -117,20 +117,24 @@ class GalsimKernel:
         self.real_data_stamp.write(start_model_out)
 
         self.model_img = pf.open(start_model_out)[0].data
+        self.real_data_stamp_tobepixelated = pf.open(start_model_out)[0].data
 
         self.model_img_pix = self.pixelize( self.model_img )
+        self.real_data_stamp_pixelated = self.pixelize( self.real_data_stamp_tobepixelated )
+        self.model_img_pix = self.model_img
 
         self.model = np.array( self.model_img_pix, dtype=float )
         self.model = np.ascontiguousarray(np.flipud(np.fliplr(self.model.T)))
-        #self.model = np.transpose(self.model)
 
-        #self.real_data_stamp = full_real_data_image
 
-        self.real_data_stamp_trimmed = full_real_data_image[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA+self.trim_edges ) 
-                                                                    ,int( self.galpos_ra+self.stamp_RA-self.trim_edges )
-                                                                    ,int( self.galpos_dec-self.stamp_DEC+self.trim_edges )
-                                                                    ,int( self.galpos_dec+self.stamp_DEC-self.trim_edges )
-                                                                    ) ]
+        self.real_data_stamp_trimmed = self.real_data_stamp_pixelated[ self.trim_edges:-self.trim_edges
+                                                                        , self.trim_edges:-self.trim_edges
+                                                                     ]
+        #self.real_data_stamp_trimmed = full_real_data_image[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA+self.trim_edges ) 
+        #                                                            ,int( self.galpos_ra+self.stamp_RA-self.trim_edges )
+        #                                                            ,int( self.galpos_dec-self.stamp_DEC+self.trim_edges )
+        #                                                            ,int( self.galpos_dec+self.stamp_DEC-self.trim_edges )
+        #                                                            ) ]
 
         real_data_filename = 'test_data_out.fits'
         real_data_file_out = os.path.join( self.outdir, real_data_filename )
@@ -139,7 +143,7 @@ class GalsimKernel:
         self.real_stamp_array = self.real_stamp.ravel()
         print 'real_stamp '+str(self.real_stamp.shape)
         print 'Done Innitting'
-        #raw_input()
+        raw_input()
 
     """
     This will manage the iterating process
@@ -190,7 +194,6 @@ class GalsimKernel:
         print 'convolving'
         # Convolve galaxy+sn model with psf
         self.final_big_fft = galsim.Convolve( [self.total_gal, self.psf], gsparams = self.big_fft_params )
-        #self.final_big_fft = galsim.Convolve([self.total_gal],gsparams=self.big_fft_params)
 
         t5 = time.time()
         print t5-t4
@@ -205,7 +208,6 @@ class GalsimKernel:
         self.sim_filename = 'test_sim_out.fits'
         self.sim_full_filename = 'test_sim_big_out.fits'
         self.simoutfile = os.path.join(self.outdir,self.sim_filename)
-        #self.simbigoutfile = os.path.join(self.outdir,self.sim_full_filename)
 
 
         self.final_out_image = self.final_big_fft.drawImage( image = self.sim_stamp, wcs = self.wcs.local(image_pos=self.image_pos) )
@@ -217,23 +219,8 @@ class GalsimKernel:
                                                                     )]
         self.final_out_image_trimmed.write(file_name = self.simoutfile)
 
-        #self.real_data_stamp.copyFrom(self.final_out_image)
-        #self.full_real_data_image.drawImage(image = self.real_data_stamp)
-        
-        #self.full_real_data_image.write(file_name = self.simbigoutfile)
-        #self.final_out_image = self.final_big_fft.drawImage( image = self.sim_stamp )
-
-
-
-
-
         t7 = time.time()
-        print t7-t1
-
-        #self.sim_filename = 'test_sim_out.fits'
-        #self.simoutfile = os.path.join(self.outdir,self.sim_filename)
-        #self.final_out_image.write(self.simoutfile) # Write to .fits file
-
+        print t7-t6
 
     """
     Adjusting the guess for the location and flux of the supernova
@@ -276,7 +263,7 @@ class GalsimKernel:
         return p_value
 
     def pixelize( self, img ):
-        pix_img = img#NEED TO IMPLEMENT
+        pix_img, edges = np.histogramdd(img,bins=5,5)
         return pix_img
 
 def read_query( file, image_dir ):
