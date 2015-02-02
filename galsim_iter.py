@@ -119,7 +119,7 @@ class GalsimKernel:
         self.model_img_pix = self.pixelize( self.model_img )
 
         self.model = np.array( self.model_img_pix, dtype=float )
-        #self.model = np.ascontiguousarray(self.model.T)
+        self.model = np.ascontiguousarray(np.flipud(np.fliplr(self.model.T)))
         #self.model = np.transpose(self.model)
 
         #self.real_data_stamp = full_real_data_image
