@@ -125,9 +125,16 @@ class GalsimKernel:
         #self.model = np.transpose(self.model)
 
         #self.real_data_stamp = full_real_data_image
+
+        self.real_data_stamp_trimmed = full_real_data_image[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA ) + int(self.trim_edges)
+                                                                    ,int( self.galpos_ra+self.stamp_RA ) - int(self.trim_edges)
+                                                                    ,int( self.galpos_dec-self.stamp_DEC ) + int(self.trim_edges)
+                                                                    ,int( self.galpos_dec+self.stamp_DEC ) - int(self.trim_edges)
+                                                                    ) ]
+
         real_data_filename = 'test_data_out.fits'
         real_data_file_out = os.path.join( self.outdir, real_data_filename )
-        self.real_data_stamp.write( real_data_file_out )
+        self.real_data_stamp_trimmed.write( real_data_file_out )
         self.real_stamp = pf.open( real_data_file_out )[0].data
         self.real_stamp_array = self.real_stamp.ravel()
         print 'real_stamp '+str(self.real_stamp.shape)
