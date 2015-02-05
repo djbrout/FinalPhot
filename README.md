@@ -26,7 +26,7 @@ INPUT (LEFT) OUTPUT (RIGHT):
 
 Pixelating and Trimming Edges:
 ==============================
-Pixelating has been implemented. Currentl losing RA and DEC values for the pixels so I might want to keep track of that.
+Pixelating has been implemented using bilinear interpolation. Currentl losing RA and DEC values for the pixels so I might want to keep track of that.
 Galsim also blurrs the edges of the stamp when convoliving with the psf so I'm further trimming the stamps to avoid that affecting the correlation.
 
 ![alt tag](https://raw.github.com/djbrout/FinalPhot/master/readme_files/pixelize1.png)
