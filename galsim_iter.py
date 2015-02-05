@@ -272,7 +272,7 @@ class GalsimKernel:
         #string model and sim out into long 1D arrays and correlate
         return p_value
 
-    def pixelize( self, img, zoomxfactor=.3 ):
+    def pixelize( self, img, zoomxfactor=.1 ):
         print img.shape
         pix_img = zoom(img,zoomxfactor,order=1)# order 1 is bilinear
         print pix_img.shape
