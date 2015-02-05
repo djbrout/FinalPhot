@@ -10,10 +10,6 @@ Update:
 
 Currently I'm looking at the first exposure (247897) of galaxy DES13E1sae found here http://dessne.cosmology.illinois.edu/SNWG/web/display/examineCand.php?Name=DES13E1sae
 
-I have verified that the __REAL__ data stamp is correcty zooming in on the galaxy with pixel values given by the query in the link above (1416, 1409).
-
-Will need to trim outside of image in order to avoid poor correlations between the real data and galsim output.
-
 The .fits of this exposure is located here: 
 
 /global/scratch2/sd/dbrout/SN_images/20131028_SN-E1/g_05/SNp1_247897_SN-E1_tile20_g_05.fits
