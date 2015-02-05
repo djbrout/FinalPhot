@@ -45,6 +45,7 @@ class GalsimKernel:
                  , psf_file = ''
                  , outdir = None
                  , trim_edges = 1 # num pixels
+                 , coarse_pixel_scale = .5 #arcsec
                  ):
 
 
@@ -64,6 +65,7 @@ class GalsimKernel:
         self.model_img = self.real_img
 
         self.pixel_scale = self.real_header['PIXSCAL1']
+        self.coarse_factor = self.pixel_scale/coarse_pixel_scale
         #self.pixel_scale = 0.2634
 
         self.SN_flux = SN_flux_guess
@@ -272,7 +274,9 @@ class GalsimKernel:
         #string model and sim out into long 1D arrays and correlate
         return p_value
 
-    def pixelize( self, img, zoomxfactor=.2 ):
+    def pixelize( self, img, zoomxfactor=None ):
+        if zoomxfactor is None:
+            zoomxfactor = self.coarse_factor
         print img.shape
         pix_img = zoom(img,zoomxfactor,order=1)# order 1 is bilinear
         print pix_img.shape
