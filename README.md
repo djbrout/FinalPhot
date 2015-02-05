@@ -24,6 +24,14 @@ INPUT (LEFT) OUTPUT (RIGHT):
 ![alt tag](https://raw.github.com/djbrout/FinalPhot/master/readme_files/update_stampsworking.png)
 
 
+Pixelating and Trimming Edges:
+==============================
+Pixelating has been implemented. Currentl losing RA and DEC values for the pixels so I might want to keep track of that.
+Galsim also blurrs the edges of the stamp when convoliving with the psf so I'm further trimming the stamps to avoid that affecting the correlation.
+
+![alt tag](https://raw.github.com/djbrout/FinalPhot/master/readme_files/pixelize1.png)
+
+
 Speed:
 ======
 
@@ -32,18 +40,13 @@ At the moment, the code takes 0.09 seconds to run. 0.08 of that time is taken by
 
 TO DO LIST:
 ===========
-* add trimming feature to stamps
+* Dont lose RA and DEC when pixelating.
 
 * figure out how to adjust without drawing and interpolating
 
 * Implement adjust_model()
 
 * Allow GalsimKernel to accept arrays of galpos_ra's and decs
-
-* Figure out how to ravel the Galsim image
-
-* Implement pixelize image
-
 
 * How do I know which images are pre-post SN?
 
