@@ -17,6 +17,7 @@ from scipy import stats
 import os
 import time
 import rdcol
+from scipy.ndimage.interpolation import zoom
 
 class GalsimKernel:
     """Pixelize the input image and use as a first guess towards a simulated image. 
@@ -138,7 +139,16 @@ class GalsimKernel:
 
         real_data_filename = 'test_data_out.fits'
         real_data_file_out = os.path.join( self.outdir, real_data_filename )
-        self.real_data_stamp_trimmed.write( real_data_file_out )
+        os.system('rm '+real_data_file_out)
+        pf.writeto(real_data_file_out, self.real_data_stamp_trimmed)
+        #self.real_data_stamp_trimmed.write( real_data_file_out )
+        
+        real_data_filename_beforepix = 'test_data_out_before_pix.fits'
+        real_data_file_out_beforepix = os.path.join( self.outdir, real_data_filename_beforepix )
+        #self.real_data_stamp_tobepixelated.write( real_data_file_out_beforepix )
+        os.system('rm '+real_data_file_out_beforepix )
+        pf.writeto(real_data_file_out_beforepix,self.real_data_stamp_tobepixelated)
+
         self.real_stamp = pf.open( real_data_file_out )[0].data
         self.real_stamp_array = self.real_stamp.ravel()
         print 'real_stamp '+str(self.real_stamp.shape)
@@ -262,9 +272,10 @@ class GalsimKernel:
         #string model and sim out into long 1D arrays and correlate
         return p_value
 
-    def pixelize( self, img ):
+    def pixelize( self, img, zoomxfactor=.3 ):
         print img.shape
-        pix_img, edges = np.histogramdd(np.array(img),bins=(5,5))
+        pix_img = zoom(img,zoomxfactor,order=1)# order 1 is bilinear
+        print pix_img.shape
         return pix_img
 
 def read_query( file, image_dir ):
