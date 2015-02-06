@@ -19,6 +19,10 @@ GALSIM INPUT (LEFT) OUTPUT (RIGHT):
 
 ![alt tag](https://raw.github.com/djbrout/FinalPhot/master/readme_files/update_stampsworking.png)
 
+pixelated and trimmed
+
+![alt tag](https://raw.github.com/djbrout/FinalPhot/master/readme_files/sim_and_pix_working.png)
+
 
 Pixelating and Trimming Edges:
 ==============================
