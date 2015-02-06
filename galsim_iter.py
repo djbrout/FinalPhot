@@ -173,27 +173,69 @@ class GalsimKernel:
         self.real_stamp_array = self.real_stamp.ravel()
         self.weights_stamp_array = self.weights_stamp_trimmed.ravel()
 
+
+        '''
+        Set iteration parameters
+        '''
+        self.chisq = []
+        self.chisq.append(9999999)
+        self.model_pixels = []
+        [ model_pixels.append([]) for i in self.real_stamp_array]
+
         print 'Done Innitting'
 
     """
     This will manage the iterating process
     """
     def run( self ):
-        correlation = 10000
-        while correlation > self.satisfactory:
+        self.thischisq = 999999
+        while self.thischisq > self.satisfactory:
             print 'Press Enter to continue'
             raw_input()
+
             t1 = time.time()
             self.adjust_sn()
             print 'Done adjusting SN'
+            
             self.adjust_model() 
             print 'Done adjusting model'
+            
             self.kernel()
             print 'Executed Kernel'
-            correlation = self.compare_model_and_sim()
-            print 'Correlated ' + str( correlation )
+            
+            self.thischisq = self.compare_model_and_sim()
+            print 'Correlated ' + str( self.thischisq )
+            
+            
+            #decide whether to accept new values
+            accept_bool = self.accept()
+
+            if accept_bool:
+                self.copy_adjusted_image_to_model()
+                self.update_pixel_history()
+                self.chisq.appen(thischisq)
+
+
             t2 = time.time()
+
             print t2-t1
+
+    def accept(self):
+        alpha = np.exp(self.chisq[-1]-self.thischisq)/2.0
+        return_bool = False
+        if alpha >= 1:
+            return_bool = True
+        else:
+            if np.random.rand() < alpha:
+                return_bool = True
+        return return_bool
+
+    def copy_adjusted_image_to_model(self):
+        return
+
+    def update_pixel_history(self):
+        return
+        
 
     """                                                                                                                                    
     the kernel gets iterated over...                                                                                       
@@ -288,9 +330,6 @@ class GalsimKernel:
     """
     def adjust_model( self ):
         return
-
-    
-
 
     """
     Use Pearson Correlation to calculate r value (univariate gaussian distr)
@@ -447,4 +486,3 @@ if __name__=='__main__':
     
     test.run()
 
-#model_arr = [23,26,44],[12,1,44],[15,161,23]
