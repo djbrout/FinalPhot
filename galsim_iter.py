@@ -224,13 +224,22 @@ class GalsimKernel:
 
         self.final_out_image = self.final_big_fft.drawImage( image = self.sim_stamp, wcs = self.wcs.local(image_pos=self.image_pos) )
         
-        self.final_out_image_trimmed = self.final_out_image[galsim.BoundsI( int( self.trim_edges ) + 1
-                                                                    , int(self.stamp_RA*2+1) - int( self.trim_edges )
-                                                                    , int( self.trim_edges ) + 1
-                                                                    , int(self.stamp_DEC*2+1) - int( self.trim_edges )
-                                                                    )]
-        self.final_out_image_trimmed.write(file_name = self.simoutfile)
+        
 
+        #self.final_out_image_trimmed = self.final_out_image[galsim.BoundsI( int( self.trim_edges ) + 1
+        #                                                            , int(self.stamp_RA*2+1) - int( self.trim_edges )
+        #                                                            , int( self.trim_edges ) + 1
+        #                                                            , int(self.stamp_DEC*2+1) - int( self.trim_edges )
+        #                                                            )]
+
+        self.final_out_image.write(file_name = self.simoutfile)
+
+        self.model_img = pf.open(self.simoutfile)[0].data
+        self.model_img_pix = self.pixelize( self.model_img )
+
+        self.simulated_image = self.model_img_pix[ self.trim_edges:-self.trim_edges
+                                                    , self.trim_edges:-self.trim_edges
+                                                ]
         t7 = time.time()
         print t7-t6
 
@@ -267,9 +276,7 @@ class GalsimKernel:
     See Ivezic, Connolly, VanderPlas, Gray book p115
     """
     def compare_model_and_sim( self ):
-        sim_matrix = pf.open( self.simoutfile )[0].data
-        sim_array = sim_matrix.ravel()
-        print 'sim_matrix '+str(sim_matrix.shape)
+        sim_array = self.simulated_image.ravel()
         corr_coeff, p_value = stats.pearsonr( self.real_stamp_array, sim_array ) 
         #string model and sim out into long 1D arrays and correlate
         return p_value
