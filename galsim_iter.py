@@ -39,10 +39,11 @@ class GalsimKernel:
                  , SN_RA_guess = 0 # arcsec from center of entire image (not stamp)
                  , SN_DEC_guess = 0 # arsec from center of entire image (not stamp)
                  , SN_flux_guess = 0.0
-                 , satisfactory = .8 # process is iterated until correlation reaches this value
-                 , stamp_RA = 100#9
-                 , stamp_DEC = 100#9
+                 , satisfactory = 2 # process is iterated until chisq reaches this value
+                 , stamp_RA = 9
+                 , stamp_DEC = 9
                  , psf_file = ''
+                 , weights_file = ''
                  , outdir = None
                  , trim_edges = 1 # num pixels
                  , coarse_pixel_scale = .5 #arcsec
@@ -50,6 +51,7 @@ class GalsimKernel:
 
 
         real_img_file = os.path.join( file_path, real_img )
+        weights_file_long = os.path.join( file_path, weights_file )
         model_img_file = os.path.join( file_path, real_img )
         self.DES_PSFEx_file = os.path.join( file_path, psf_file )
 
@@ -61,7 +63,9 @@ class GalsimKernel:
         self.real_fits = pf.open( real_img_file )
         self.real_img = self.real_fits[0].data
         self.real_header = self.real_fits[0].header
-        #self.model_img = pf.open( model_img_file )[0].data
+        self.weights_fits = pf.open( weights_file_long )
+        self.weights = self.weights_fits[0].data
+
         self.model_img = self.real_img
 
         self.pixel_scale = self.real_header['PIXSCAL1']
@@ -89,7 +93,6 @@ class GalsimKernel:
         #get wcs information from real data file (this doesnt change as model changes)                                                
         self.wcs = galsim.FitsWCS( real_img_file )
 
-
         # Get psf over the entire ccd
         self.psf_model = galsim.des.DES_PSFEx( self.DES_PSFEx_file, wcs=self.wcs)
 
@@ -106,10 +109,16 @@ class GalsimKernel:
         # Read in real image for comparison to model
         #NEED TO FIGURE OUT HOW/IF THIS NEEDS TO BE PIXELIZED
         full_real_data_image = galsim.fits.read( real_img_file )
+        full_weights = galsim.fits.read( weights_file_long )
         #full_real_data_image = pf.open( real_img_file )[0].data
 
         # Chop out real data stamp NEED TO DOUBLE CHECK RA VS DEC.
         self.real_data_stamp = full_real_data_image[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA ) 
+                                                                    , int( self.galpos_ra+self.stamp_RA )
+                                                                    , int( self.galpos_dec-self.stamp_DEC )
+                                                                    , int( self.galpos_dec+self.stamp_DEC )
+                                                                    ) ]
+        self.weights_stamp = full_weights[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA ) 
                                                                     , int( self.galpos_ra+self.stamp_RA )
                                                                     , int( self.galpos_dec-self.stamp_DEC )
                                                                     , int( self.galpos_dec+self.stamp_DEC )
@@ -119,11 +128,17 @@ class GalsimKernel:
         start_model_out = os.path.join(self.outdir,start_model_filename)
         self.real_data_stamp.write(start_model_out)
 
+        weights_stamp_filename = 'weights_stamp_untrimmed_unpix.fits'
+        weights_stamp_out = os.path.join(self.outdir,weights_stamp_filename)
+        self.weights_stamp.write( weights_stamp_out )
+
         self.model_img = pf.open(start_model_out)[0].data
         self.real_data_stamp_tobepixelated = pf.open(start_model_out)[0].data
+        self.weights_stamp_tobepixelated = pf.open(weights_stamp_out)[0].data
 
         self.model_img_pix = self.pixelize( self.model_img )
         self.real_data_stamp_pixelated = self.pixelize( self.real_data_stamp_tobepixelated )
+        self.weights_stamp_pixelated = self.pixelize( self.weights_stamp_tobepixelated )
         self.model_img_pix = self.model_img
 
         self.model = np.array( self.model_img_pix, dtype=float )
@@ -131,6 +146,10 @@ class GalsimKernel:
 
 
         self.real_data_stamp_trimmed = self.real_data_stamp_pixelated[ self.trim_edges:-self.trim_edges
+                                                                        , self.trim_edges:-self.trim_edges
+                                                                     ]
+
+        self.weights_stamp_trimmed = self.weights_stamp_pixelated[ self.trim_edges:-self.trim_edges
                                                                         , self.trim_edges:-self.trim_edges
                                                                      ]
         #self.real_data_stamp_trimmed = full_real_data_image[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA+self.trim_edges ) 
@@ -143,26 +162,25 @@ class GalsimKernel:
         real_data_file_out = os.path.join( self.outdir, real_data_filename )
         os.system('rm '+real_data_file_out)
         pf.writeto(real_data_file_out, self.real_data_stamp_trimmed)
-        #self.real_data_stamp_trimmed.write( real_data_file_out )
         
         real_data_filename_beforepix = 'test_data_out_before_pix.fits'
         real_data_file_out_beforepix = os.path.join( self.outdir, real_data_filename_beforepix )
-        #self.real_data_stamp_tobepixelated.write( real_data_file_out_beforepix )
+
         os.system('rm '+real_data_file_out_beforepix )
         pf.writeto(real_data_file_out_beforepix,self.real_data_stamp_tobepixelated)
 
         self.real_stamp = pf.open( real_data_file_out )[0].data
         self.real_stamp_array = self.real_stamp.ravel()
-        print 'real_stamp '+str(self.real_stamp.shape)
+        self.weights_stamp_array = self.weights_stamp_trimmed.ravel()
+
         print 'Done Innitting'
-        raw_input()
 
     """
     This will manage the iterating process
     """
     def run( self ):
-        correlation = 0.0
-        while correlation < self.satisfactory:
+        correlation = 10000
+        while correlation > self.satisfactory:
             print 'Press Enter to continue'
             raw_input()
             t1 = time.time()
@@ -271,15 +289,31 @@ class GalsimKernel:
     def adjust_model( self ):
         return
 
+    
+
+
     """
     Use Pearson Correlation to calculate r value (univariate gaussian distr)
     See Ivezic, Connolly, VanderPlas, Gray book p115
     """
-    def compare_model_and_sim( self ):
+    def pearson_corr( self ):
         sim_array = self.simulated_image.ravel()
         corr_coeff, p_value = stats.pearsonr( self.real_stamp_array, sim_array ) 
         #string model and sim out into long 1D arrays and correlate
         return p_value
+
+    """
+    Compute Chi Squared for 2 maps and an 1/variance map.
+    """
+    def compare_model_and_sim( self ):
+        sim_image_ravel = self.simulated_image.ravel()
+        chisq = 0.0
+        i = -1
+        for sim_pixel in sim_image_ravel:
+            i += 1
+            chisq += (sim_pixel - self.real_stamp_array[i])**2 * self.weights_stamp_array[i]
+
+        return chisq
 
     def pixelize( self, img, zoomxfactor=None ):
         if zoomxfactor is None:
@@ -385,6 +419,7 @@ if __name__=='__main__':
 
     real_img_without_SN = str(image_paths[image_num]).strip('[').strip(']').replace("'",'')
     psf_file = real_img_without_SN.split('.')[0]+'.psf'
+    weights_file = real_img_without_SN.split('.')[0]+'.weight.fits'
     this_exposure_and_ccd = query_wheres[exposures[image_num]]
     print real_img_without_SN
     print psf_file
@@ -404,6 +439,7 @@ if __name__=='__main__':
     # Initial guess for model is real img without SN
     test = GalsimKernel( real_img_without_SN, real_img_without_SN
                                             , psf_file = psf_file
+                                            , weights_file = weights_file
                                             , outdir = outdir 
                                             , galpos_ra = galpos_ra
                                             , galpos_dec = galpos_dec
