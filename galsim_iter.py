@@ -39,7 +39,7 @@ class GalsimKernel:
                  , SN_RA_guess = 0 # arcsec from center of entire image (not stamp)
                  , SN_DEC_guess = 0 # arsec from center of entire image (not stamp)
                  , SN_flux_guess = 0.0
-                 , satisfactory = 2 # process is iterated until chisq reaches this value
+                 , satisfactory = 5 # process is iterated until chisq reaches this value
                  , stamp_RA = 9
                  , stamp_DEC = 9
                  , psf_file = ''
@@ -190,19 +190,20 @@ class GalsimKernel:
     """
     def run( self ):
         self.thischisq = 9999
+        t1 = time.time()
         while self.thischisq > self.satisfactory:
-            print 'Press Enter to continue'
-            raw_input()
+            #print 'Press Enter to continue'
+            #raw_input()
 
             t1 = time.time()
             self.adjust_sn()
-            print 'Done adjusting SN'
+            #print 'Done adjusting SN'
             
             self.adjust_model() 
-            print 'Done adjusting model'
+            #print 'Done adjusting model'
             
             self.kernel()
-            print 'Executed Kernel'
+            #print 'Executed Kernel'
             
             self.thischisq = self.compare_model_and_sim()
             print 'Correlated ' + str( self.thischisq )
@@ -216,10 +217,11 @@ class GalsimKernel:
                 self.update_pixel_history()
                 self.chisq.append(self.thischisq)
 
+        t2 = time.time()
+        print 'Total Time: '+str(t2-t1)
+            #t2 = time.time()
 
-            t2 = time.time()
-
-            print t2-t1
+            #print t2-t1
 
     def accept(self):
         alpha = np.exp(self.chisq[-1]-self.thischisq)/2.0
@@ -245,41 +247,41 @@ class GalsimKernel:
     the kernel gets iterated over...                                                                                       
     """
     def kernel( self ):
-        t1 = time.time()
-        print 'creating galsim image'
+        #t1 = time.time()
+        #print 'creating galsim image'
         # Convert model to galsim image
         self.im = galsim.Image( array = self.kicked_model, scale = self.pixel_scale ) # scale is arcsec/pixel
 
-        t2 = time.time()
-        print t2-t1
-        print 'creating gal_model'
+        #t2 = time.time()
+        #print t2-t1
+        #print 'creating gal_model'
         # Create interpolated image (can mess around with interp methods...)
         self.big_fft_params = galsim.GSParams(maximum_fft_size=10240)
 
         self.gal_model = galsim.InterpolatedImage( image = self.im, x_interpolant = 'linear')
 
 
-        t3 = time.time()
-        print t3-t2
-        print 'creating total_gal'
+        #t3 = time.time()
+        #print t3-t2
+        #print 'creating total_gal'
         # Combine galaxy model and supernova
         self.total_gal = self.gal_model + self.sn
 
-        t4 = time.time()
-        print t4-t3
-        print 'convolving'
+        #t4 = time.time()
+        #print t4-t3
+        #print 'convolving'
         # Convolve galaxy+sn model with psf
         self.final_big_fft = galsim.Convolve( [self.total_gal, self.psf], gsparams = self.big_fft_params )
 
-        t5 = time.time()
-        print t5-t4
-        print 'stamping'
+        #t5 = time.time()
+        #print t5-t4
+        #print 'stamping'
         # create a blank stamp to be used by drawImage
         self.sim_stamp = galsim.ImageF( self.stamp_RA*2 + 1, self.stamp_DEC*2 + 1, 
                                         wcs = self.wcs.local(image_pos=self.image_pos) )
-        t6 = time.time()
-        print t6-t5
-        print 'drawing'
+        #t6 = time.time()
+        #print t6-t5
+        #print 'drawing'
 
         self.sim_filename = 'test_sim_out.fits'
         self.sim_full_filename = 'test_sim_big_out.fits'
@@ -304,8 +306,8 @@ class GalsimKernel:
         self.simulated_image = self.model_img_pix[ self.trim_edges:-self.trim_edges
                                                     , self.trim_edges:-self.trim_edges
                                                 ]
-        t7 = time.time()
-        print t7-t6
+        #t7 = time.time()
+        #print t7-t6
 
     """
     Adjusting the guess for the location and flux of the supernova
