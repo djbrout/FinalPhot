@@ -191,7 +191,9 @@ class GalsimKernel:
     def run( self ):
         self.thischisq = 9999
         t1 = time.time()
+        counter = 0
         while self.thischisq > self.satisfactory:
+            counter += 1
             #print 'Press Enter to continue'
             #raw_input()
 
@@ -219,13 +221,14 @@ class GalsimKernel:
 
         t2 = time.time()
         print 'Total Time: '+str(t2-t1)
+        print 'Num Iterations: '+str(counter)
             #t2 = time.time()
 
             #print t2-t1
 
     def accept(self):
         alpha = np.exp(self.chisq[-1]-self.thischisq)/2.0
-        print 'alpha '+str(alpha)
+        #print 'alpha '+str(alpha)
         return_bool = False
         if alpha >= 1:
             return_bool = True
@@ -365,9 +368,9 @@ class GalsimKernel:
     def pixelize( self, img, zoomxfactor=None ):
         if zoomxfactor is None:
             zoomxfactor = self.coarse_factor
-        print img.shape
+        #print img.shape
         pix_img = zoom(img,zoomxfactor,order=1)# order 1 is bilinear
-        print pix_img.shape
+        #print pix_img.shape
         return pix_img
 
 def read_query( file, image_dir ):
