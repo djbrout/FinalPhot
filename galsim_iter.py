@@ -178,17 +178,18 @@ class GalsimKernel:
         Set iteration parameters
         '''
         self.chisq = []
-        self.chisq.append(9999999)
+        self.chisq.append(9999)
         self.model_pixels = []
-        [ model_pixels.append([]) for i in self.real_stamp_array]
+        [ self.model_pixels.append([]) for i in np.nditer(self.real_stamp_array)]
 
+        self.pixel_history = []
         print 'Done Innitting'
 
     """
     This will manage the iterating process
     """
     def run( self ):
-        self.thischisq = 999999
+        self.thischisq = 9999
         while self.thischisq > self.satisfactory:
             print 'Press Enter to continue'
             raw_input()
@@ -206,14 +207,14 @@ class GalsimKernel:
             self.thischisq = self.compare_model_and_sim()
             print 'Correlated ' + str( self.thischisq )
             
-            
             #decide whether to accept new values
             accept_bool = self.accept()
 
             if accept_bool:
+                print 'accepted'
                 self.copy_adjusted_image_to_model()
                 self.update_pixel_history()
-                self.chisq.appen(thischisq)
+                self.chisq.append(self.thischisq)
 
 
             t2 = time.time()
@@ -222,6 +223,7 @@ class GalsimKernel:
 
     def accept(self):
         alpha = np.exp(self.chisq[-1]-self.thischisq)/2.0
+        print 'alpha '+str(alpha)
         return_bool = False
         if alpha >= 1:
             return_bool = True
@@ -231,11 +233,13 @@ class GalsimKernel:
         return return_bool
 
     def copy_adjusted_image_to_model(self):
+        self.model = self.kicked_model
         return
 
     def update_pixel_history(self):
+        self.pixel_history.append(self.kicked_model)
         return
-        
+
 
     """                                                                                                                                    
     the kernel gets iterated over...                                                                                       
@@ -244,7 +248,7 @@ class GalsimKernel:
         t1 = time.time()
         print 'creating galsim image'
         # Convert model to galsim image
-        self.im = galsim.Image( array = self.model, scale = self.pixel_scale ) # scale is arcsec/pixel
+        self.im = galsim.Image( array = self.kicked_model, scale = self.pixel_scale ) # scale is arcsec/pixel
 
         t2 = time.time()
         print t2-t1
@@ -328,7 +332,9 @@ class GalsimKernel:
     """
     Adjusting the galaxy model pixel values. Completely empirical!
     """
-    def adjust_model( self ):
+    def adjust_model( self , stdev = 1):
+        self.deltas = np.random.normal(scale= stdev , size= self.model.shape )
+        self.kicked_model = self.model + self.deltas
         return
 
     """
