@@ -39,7 +39,7 @@ class GalsimKernel:
                  , SN_RA_guess = 0 # arcsec from center of entire image (not stamp)
                  , SN_DEC_guess = 0 # arsec from center of entire image (not stamp)
                  , SN_flux_guess = 0.0
-                 , satisfactory = 5 # process is iterated until chisq reaches this value
+                 , satisfactory = 49.9 # process is iterated until chisq reaches this value
                  , stamp_RA = 9
                  , stamp_DEC = 9
                  , psf_file = ''
@@ -54,6 +54,8 @@ class GalsimKernel:
         weights_file_long = os.path.join( file_path, weights_file )
         model_img_file = os.path.join( file_path, real_img )
         self.DES_PSFEx_file = os.path.join( file_path, psf_file )
+
+        self.pixel_history_npz = os.path.join( outdir, 'pixel_history.npz' )
 
         if not os.path.exists(outdir):
             os.makedirs(outdir)
@@ -173,6 +175,10 @@ class GalsimKernel:
         self.real_stamp_array = self.real_stamp.ravel()
         self.weights_stamp_array = self.weights_stamp_trimmed.ravel()
 
+        self.sim_filename = 'test_sim_out.fits'
+        self.sim_full_filename = 'test_sim_pix_out.fits'
+        self.simoutfile = os.path.join(self.outdir,self.sim_filename)
+        self.simpixout = os.path.join(self.outdir,self.sim_full_filename)
 
         '''
         Set iteration parameters
@@ -197,7 +203,6 @@ class GalsimKernel:
             #print 'Press Enter to continue'
             #raw_input()
 
-            t1 = time.time()
             self.adjust_sn()
             #print 'Done adjusting SN'
             
@@ -214,7 +219,7 @@ class GalsimKernel:
             accept_bool = self.accept()
 
             if accept_bool:
-                print 'accepted'
+                #print 'accepted'
                 self.copy_adjusted_image_to_model()
                 self.update_pixel_history()
                 self.chisq.append(self.thischisq)
@@ -222,6 +227,8 @@ class GalsimKernel:
         t2 = time.time()
         print 'Total Time: '+str(t2-t1)
         print 'Num Iterations: '+str(counter)
+        np.savez(self.pixel_history_npz,self.pixel_history)
+        pf.writeto(self.simpixout,self.simulated_image)
             #t2 = time.time()
 
             #print t2-t1
@@ -286,9 +293,6 @@ class GalsimKernel:
         #print t6-t5
         #print 'drawing'
 
-        self.sim_filename = 'test_sim_out.fits'
-        self.sim_full_filename = 'test_sim_big_out.fits'
-        self.simoutfile = os.path.join(self.outdir,self.sim_filename)
 
 
         self.final_out_image = self.final_big_fft.drawImage( image = self.sim_stamp, wcs = self.wcs.local(image_pos=self.image_pos) )
@@ -309,6 +313,8 @@ class GalsimKernel:
         self.simulated_image = self.model_img_pix[ self.trim_edges:-self.trim_edges
                                                     , self.trim_edges:-self.trim_edges
                                                 ]
+        
+
         #t7 = time.time()
         #print t7-t6
 
