@@ -18,6 +18,7 @@ import os
 import time
 import rdcol
 from scipy.ndimage.interpolation import zoom
+import pylab as P
 
 class GalsimKernel:
     """Pixelize the input image and use as a first guess towards a simulated image. 
@@ -383,7 +384,14 @@ class GalsimKernel:
         sim_stamp = data['simulated_stamp']
         real_stamp = data['data_stamp']
 
-        
+        pixel_vec = []
+        for step in pixel_history:
+            pixel_vec.append(step[0,0])
+        pixel_vec_np = np.asarray(pixel_vec)
+        #n, bins, patches = P.hist(pixel_vec_np, 100, histtype='stepfilled')
+        #P.setp(patches, 'facecolor', 'g', 'alpha', 0.75)
+        P.plot(np.arange(0,len(pixel_vec_np)),pixel_vec_np)
+        P.show()
         return
 
 def read_query( file, image_dir ):
@@ -471,6 +479,6 @@ if __name__=='__main__':
                                             , results_tag = 'test'
                                             )
     
-    test.run()
+    #test.run()
     test.plot_pixel_histograms()
 
