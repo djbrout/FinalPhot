@@ -228,6 +228,7 @@ class GalsimKernel:
                 self.update_pixel_history()
                 self.chisq.append(self.thischisq)
             else:
+                self.accepted_history = (self.accepted_history*self.accepted_int) / (self.accepted_int + 1)
                 self.update_unaccepted_pixel_history()
 
         t2 = time.time()
@@ -391,6 +392,10 @@ class GalsimKernel:
         pix_img = zoom(img,zoomxfactor,order=1)# order 1 is bilinear
         #print pix_img.shape
         return pix_img
+
+
+    def plot_pixel_histograms( self ):
+
 
 def read_query( file, image_dir ):
     query = rdcol.read( file, 1, 2, '\t')
