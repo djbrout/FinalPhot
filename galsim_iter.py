@@ -47,8 +47,8 @@ class GalsimKernel:
                  , outdir = None
                  , trim_edges = 1 # num pixels
                  , coarse_pixel_scale = .5 #arcsec
-                 , do_run = False
                  , results_tag = 'test' 
+                 , burn_in_chisq = 60
                  ):
 
 
@@ -87,6 +87,7 @@ class GalsimKernel:
 
         self.satisfactory = satisfactory
         self.trim_edges = trim_edges
+        self.burn_in_chisq = burn_in_chisq
 
         # Create supernova point source (ie. very very small gaussian)
         self.sn = galsim.Gaussian( sigma = 1.e-8, flux = self.SN_flux )
@@ -202,6 +203,7 @@ class GalsimKernel:
         self.thischisq = 9999
         t1 = time.time()
         counter = 0
+
         while self.thischisq > self.satisfactory:
             counter += 1
             self.accepted_int += 1
@@ -225,25 +227,28 @@ class GalsimKernel:
 
             if accept_bool:
                 #print 'accepted'
-                self.accepted_history = (self.accepted_history*self.accepted_int + 1.0) / (self.accepted_int + 1)
+                self.accepted_history = ( self.accepted_history * self.accepted_int + 1.0 ) / ( self.accepted_int + 1 )
                 self.copy_adjusted_image_to_model()
                 self.update_pixel_history()
                 self.chisq.append(self.thischisq)
             else:
-                self.accepted_history = (self.accepted_history*self.accepted_int) / (self.accepted_int + 1)
+                self.accepted_history = ( self.accepted_history * self.accepted_int ) / ( self.accepted_int + 1 )
                 self.update_unaccepted_pixel_history()
 
         t2 = time.time()
-        print 'Total Time: '+str(t2-t1)
-        print 'Num Iterations: '+str(counter)
-        print 'Accepted Percentage: '+str(self.accepted_history)
-        np.savez(self.results_npz,self.pixel_history)
-        os.system('rm '+self.simpixout)
-        pf.writeto(self.simpixout,self.simulated_image)
+        print 'Total Time: ' + str( t2 - t1 )
+        print 'Num Iterations: ' + str( counter )
+        print 'Accepted Percentage: ' + str( self.accepted_history )
+        np.savez(self.results_npz, pixel_history = self.pixel_history
+                                , simulated_stamp = self.simulated_image
+                                , data_stamp = self.real_stamp
+                                )
+        os.system( 'rm ' + self.simpixout )
+        pf.writeto( self.simpixout, self.simulated_image )
 
 
     def accept(self):
-        alpha = np.exp(self.chisq[-1]-self.thischisq)/2.0
+        alpha = np.exp( self.chisq[-1] - self.thischisq ) / 2.0
         return_bool = False
         if alpha >= 1:
             return_bool = True
@@ -257,13 +262,13 @@ class GalsimKernel:
         return
 
     def update_pixel_history(self):
-        if self.thischisq < 60: #dont count burn-in period
-            self.pixel_history.append(self.kicked_model)
+        if self.thischisq < self.burn_in_chisq : #dont count burn-in period
+            self.pixel_history.append( self.kicked_model )
         return
 
     def update_unaccepted_pixel_history(self):
-        if self.thischisq < 60:#dont count burn in period
-            self.pixel_history.append(self.model)
+        if self.thischisq < self.burn_in_chisq :#dont count burn in period
+            self.pixel_history.append( self.model )
         return
 
     """                                                                                                                                    
@@ -373,7 +378,13 @@ class GalsimKernel:
 
 
     def plot_pixel_histograms( self ):
+        data = np.load(self.results_npz)
+        pixel_history = data['pixel_history']
+        sim_stamp = data['simulated_stamp']
+        real_stamp = data['data_stamp']
 
+        
+        return
 
 def read_query( file, image_dir ):
     query = rdcol.read( file, 1, 2, '\t')
@@ -457,9 +468,9 @@ if __name__=='__main__':
                                             , outdir = outdir 
                                             , galpos_ra = galpos_ra
                                             , galpos_dec = galpos_dec
-                                            , do_run = False
                                             , results_tag = 'test'
                                             )
     
     test.run()
+    test.plot_pixel_histograms()
 
