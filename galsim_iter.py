@@ -39,7 +39,7 @@ class GalsimKernel:
                  , SN_RA_guess = 0 # arcsec from center of entire image (not stamp)
                  , SN_DEC_guess = 0 # arsec from center of entire image (not stamp)
                  , SN_flux_guess = 0.0
-                 , satisfactory = 49.9 # process is iterated until chisq reaches this value
+                 , satisfactory = 39 # process is iterated until chisq reaches this value
                  , stamp_RA = 9
                  , stamp_DEC = 9
                  , psf_file = ''
@@ -189,6 +189,8 @@ class GalsimKernel:
         [ self.model_pixels.append([]) for i in np.nditer(self.real_stamp_array)]
 
         self.pixel_history = []
+        self.accepted_history = 0.5
+        self.accepted_int = 0
         print 'Done Innitting'
 
     """
@@ -200,6 +202,7 @@ class GalsimKernel:
         counter = 0
         while self.thischisq > self.satisfactory:
             counter += 1
+            self.accepted_int += 1
             #print 'Press Enter to continue'
             #raw_input()
 
@@ -213,21 +216,26 @@ class GalsimKernel:
             #print 'Executed Kernel'
             
             self.thischisq = self.compare_model_and_sim()
-            print 'Correlated ' + str( self.thischisq )
+            #print 'Correlated ' + str( self.thischisq )
             
             #decide whether to accept new values
             accept_bool = self.accept()
 
             if accept_bool:
                 #print 'accepted'
+                self.accepted_history = (self.accepted_history*self.accepted_int + 1.0) / (self.accepted_int + 1)
                 self.copy_adjusted_image_to_model()
                 self.update_pixel_history()
                 self.chisq.append(self.thischisq)
+            else:
+                self.update_unaccepted_pixel_history()
 
         t2 = time.time()
         print 'Total Time: '+str(t2-t1)
         print 'Num Iterations: '+str(counter)
+        print 'Accepted Percentage: '+str(self.accepted_history)
         np.savez(self.pixel_history_npz,self.pixel_history)
+        os.system('rm '+self.simpixout)
         pf.writeto(self.simpixout,self.simulated_image)
             #t2 = time.time()
 
@@ -249,9 +257,14 @@ class GalsimKernel:
         return
 
     def update_pixel_history(self):
-        self.pixel_history.append(self.kicked_model)
+        if self.thischisq < 60: #dont count burn-in period
+            self.pixel_history.append(self.kicked_model)
         return
 
+    def update_unaccepted_pixel_history(self):
+        if self.thischisq < 60:#dont count burn in period
+            self.pixel_history.append(self.model)
+        return
 
     """                                                                                                                                    
     the kernel gets iterated over...                                                                                       
