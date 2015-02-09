@@ -47,6 +47,8 @@ class GalsimKernel:
                  , outdir = None
                  , trim_edges = 1 # num pixels
                  , coarse_pixel_scale = .5 #arcsec
+                 , do_run = False
+                 , results_tag = 'test' 
                  ):
 
 
@@ -55,7 +57,7 @@ class GalsimKernel:
         model_img_file = os.path.join( file_path, real_img )
         self.DES_PSFEx_file = os.path.join( file_path, psf_file )
 
-        self.pixel_history_npz = os.path.join( outdir, 'pixel_history.npz' )
+        self.results_npz = os.path.join( outdir, 'RESULTS_'+results_tag+'.npz' )
 
         if not os.path.exists(outdir):
             os.makedirs(outdir)
@@ -235,16 +237,13 @@ class GalsimKernel:
         print 'Total Time: '+str(t2-t1)
         print 'Num Iterations: '+str(counter)
         print 'Accepted Percentage: '+str(self.accepted_history)
-        np.savez(self.pixel_history_npz,self.pixel_history)
+        np.savez(self.results_npz,self.pixel_history)
         os.system('rm '+self.simpixout)
         pf.writeto(self.simpixout,self.simulated_image)
-            #t2 = time.time()
 
-            #print t2-t1
 
     def accept(self):
         alpha = np.exp(self.chisq[-1]-self.thischisq)/2.0
-        #print 'alpha '+str(alpha)
         return_bool = False
         if alpha >= 1:
             return_bool = True
@@ -271,41 +270,24 @@ class GalsimKernel:
     the kernel gets iterated over...                                                                                       
     """
     def kernel( self ):
-        #t1 = time.time()
-        #print 'creating galsim image'
+
         # Convert model to galsim image
         self.im = galsim.Image( array = self.kicked_model, scale = self.pixel_scale ) # scale is arcsec/pixel
 
-        #t2 = time.time()
-        #print t2-t1
-        #print 'creating gal_model'
         # Create interpolated image (can mess around with interp methods...)
         self.big_fft_params = galsim.GSParams(maximum_fft_size=10240)
 
         self.gal_model = galsim.InterpolatedImage( image = self.im, x_interpolant = 'linear')
 
-
-        #t3 = time.time()
-        #print t3-t2
-        #print 'creating total_gal'
         # Combine galaxy model and supernova
         self.total_gal = self.gal_model + self.sn
 
-        #t4 = time.time()
-        #print t4-t3
-        #print 'convolving'
         # Convolve galaxy+sn model with psf
         self.final_big_fft = galsim.Convolve( [self.total_gal, self.psf], gsparams = self.big_fft_params )
 
-        #t5 = time.time()
-        #print t5-t4
-        #print 'stamping'
         # create a blank stamp to be used by drawImage
         self.sim_stamp = galsim.ImageF( self.stamp_RA*2 + 1, self.stamp_DEC*2 + 1, 
                                         wcs = self.wcs.local(image_pos=self.image_pos) )
-        #t6 = time.time()
-        #print t6-t5
-        #print 'drawing'
 
 
 
@@ -327,10 +309,6 @@ class GalsimKernel:
         self.simulated_image = self.model_img_pix[ self.trim_edges:-self.trim_edges
                                                     , self.trim_edges:-self.trim_edges
                                                 ]
-        
-
-        #t7 = time.time()
-        #print t7-t6
 
     """
     Adjusting the guess for the location and flux of the supernova
@@ -413,33 +391,13 @@ def read_query( file, image_dir ):
     
     query_wheres = {}
 
-    #print exposures
-    #print 'hehe'
-    #raw_input()
     for exposure in np.unique( exposures ):
         for ccd in np.unique( ccds ):
             this_ccd = int(ccd.split('-')[-1])
-            #print 'exposure '+str(int(exposure))
-            #print 'ccd ' + str(this_ccd)
-            #print 'image path'
-            #print images
 
-            #print (exposure_nums == str(int(exposure))) & (field_ccds == this_ccd)
-            #print images[10]
-            #raw_input()
-            #print images[(exposure_nums == str(int(exposure))) & (field_ccds == this_ccd)]
-            #print ccds[(exposures == exposure) & (ccds == ccd)]
             query_wheres[ exposure ] = [ (exposures == exposure) & (ccds == ccd) ]
 
-            #print exposure_nums == int(exposure)
-            #print exposure_nums[exposure_nums == int(exposure)]
-            #print field_ccds[field_ccds == this_ccd]
             image_paths.append( images[ (exposure_nums == str(int(exposure))) & (field_ccds == this_ccd) ]) 
-
-            #print  images[ exposure_nums.index( str(int(exposure) ) ) ]
-        
-            #exposures_.append( exposure )
-            #match up with a .fits file
     
     print 'Made Image Arrays'
     return query, query_wheres, image_paths, exposures
@@ -473,21 +431,11 @@ def get_all_image_names( image_dir ):
 
 if __name__=='__main__':
     image_dir = '/global/scratch2/sd/dbrout/'
-    #real_img_without_SN = 'SNp1_228717_SN-E1_tile20_g_01.fits'
-    #real_image_with_SN = 'SNp1_228717_SN-E1_tile20_g_01+fakeSN.fits'
-    #psf_file = 'SNp1_228717_SN-E1_tile20_g_01.psf'
-    #psf_file_full = os.path.join(image_dir, psf_file)
     outdir = '/global/u1/d/dbrout/FinalPhot/out'
     query_file = './queries/test.txt'
 
     print 'Started Reading'
     query, query_wheres, image_paths, exposures = read_query( query_file, image_dir )
-
-
-    #Start by online looking at one image, one exposure
-    #print image_paths
-    #raw_input()
-    #print exposures
 
     image_num = 0
 
@@ -495,20 +443,12 @@ if __name__=='__main__':
     psf_file = real_img_without_SN.split('.')[0]+'.psf'
     weights_file = real_img_without_SN.split('.')[0]+'.weight.fits'
     this_exposure_and_ccd = query_wheres[exposures[image_num]]
+    
     print real_img_without_SN
     print psf_file
-    #Need to double check x and y are correct columns
+
     galpos_ra = np.array(query['x'])[this_exposure_and_ccd] #in pixels
     galpos_dec = np.array(query['y'])[this_exposure_and_ccd] #in pixels
-
-    #galpos_ra = 33
-    #galpos_dec = 33
-
-    print galpos_ra
-    print galpos_dec
-    print real_img_without_SN
-    print psf_file
-    #raw_input()
 
     # Initial guess for model is real img without SN
     test = GalsimKernel( real_img_without_SN, real_img_without_SN
@@ -517,6 +457,8 @@ if __name__=='__main__':
                                             , outdir = outdir 
                                             , galpos_ra = galpos_ra
                                             , galpos_dec = galpos_dec
+                                            , do_run = False
+                                            , results_tag = 'test'
                                             )
     
     test.run()
