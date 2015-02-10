@@ -40,13 +40,13 @@ class GalsimKernel:
                  , SN_DEC_guess = 0 # arsec from center of entire image (not stamp)
                  , SN_flux_guess = 0.0
                  , satisfactory = 39 # process is iterated until chisq reaches this value
-                 , stamp_RA = 9
-                 , stamp_DEC = 9
+                 , stamp_RA = 18
+                 , stamp_DEC = 18
                  , psf_file = ''
                  , weights_file = ''
                  , outdir = None
                  , trim_edges = 1 # num pixels
-                 , coarse_pixel_scale = .5 #arcsec
+                 , coarse_pixel_scale = 1.0 #arcsec
                  , results_tag = 'test' 
                  , burn_in_chisq = 99999
                  ):
@@ -208,7 +208,7 @@ class GalsimKernel:
         counter = 0
         t2 = time.time()
         #while self.thischisq > self.satisfactory:
-        while t2-t1 < 1500.:
+        while t2-t1 < 500.:
             t2 = time.time()
             counter += 1
             self.accepted_int += 1
@@ -389,14 +389,37 @@ class GalsimKernel:
         sim_stamp = data['simulated_stamp']
         real_stamp = data['data_stamp']
 
-        pixel_vec = []
+        pixel1_vec = []
         for step in pixel_history:
-            pixel_vec.append(step[0,1])
-        pixel_vec_np = np.asarray(pixel_vec)
+            pixel1_vec.append(step[0,1])
+        pixel1_vec_np = np.asarray(pixel1_vec)
+        pixel2_vec = []
+        for step in pixel_history:
+            pixel2_vec.append(step[0,5])
+        pixel2_vec_np = np.asarray(pixel2_vec)
+        pixel3_vec = []
+        for step in pixel_history:
+            pixel3_vec.append(step[2,4])
+        pixel3_vec_np = np.asarray(pixel3_vec)      
+        pixel4_vec = []
+        for step in pixel_history:
+            pixel4_vec.append(step[5,7])
+        pixel4_vec_np = np.asarray(pixel4_vec)  
         #n, bins, patches = P.hist(pixel_vec_np, 100, histtype='stepfilled')
         #P.setp(patches, 'facecolor', 'g', 'alpha', 0.75)
-        P.plot(np.arange(0,len(pixel_vec_np)),pixel_vec_np)
+        P.plot(np.arange(0,len(pixel1_vec_np)),pixel1_vec_np)
+        P.plot(np.arange(0,len(pixel2_vec_np)),pixel2_vec_np)
+        P.plot(np.arange(0,len(pixel3_vec_np)),pixel3_vec_np)
+        P.plot(np.arange(0,len(pixel4_vec_np)),pixel4_vec_np)
         P.show()
+        n, bins, patches = P.hist(pixel1_vec_np, 100, histtype='stepfilled',alpha=.3)
+        P.show()
+        n, bins, patches = P.hist(pixel2_vec_np, 100, histtype='stepfilled',alpha=.3)
+        P.show()
+        n, bins, patches = P.hist(pixel3_vec_np, 100, histtype='stepfilled',alpha=.3)
+        n, bins, patches = P.hist(pixel4_vec_np, 100, histtype='stepfilled',alpha=.3)
+        P.show()
+
         return
 
 def read_query( file, image_dir ):
@@ -481,7 +504,7 @@ if __name__=='__main__':
                                             , outdir = outdir 
                                             , galpos_ra = galpos_ra
                                             , galpos_dec = galpos_dec
-                                            , results_tag = 'test'
+                                            , results_tag = 'pix_1arcsec'
                                             )
     
     test.run()
