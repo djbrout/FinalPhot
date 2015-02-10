@@ -18,7 +18,6 @@ import os
 import time
 import rdcol
 from scipy.ndimage.interpolation import zoom
-import pylab as P
 
 class GalsimKernel:
     """Pixelize the input image and use as a first guess towards a simulated image. 
@@ -49,7 +48,7 @@ class GalsimKernel:
                  , trim_edges = 1 # num pixels
                  , coarse_pixel_scale = .5 #arcsec
                  , results_tag = 'test' 
-                 , burn_in_chisq = 60
+                 , burn_in_chisq = 99999
                  ):
 
 
@@ -130,17 +129,20 @@ class GalsimKernel:
                                                                     , int( self.galpos_dec+self.stamp_DEC )
                                                                     ) ]
 
-        start_model_filename = 'start_model.fits'
-        start_model_out = os.path.join(self.outdir,start_model_filename)
-        self.real_data_stamp.write(start_model_out)
+        #start_model_filename = 'start_model.fits'
+        #start_model_out = os.path.join(self.outdir,start_model_filename)
+        #self.real_data_stamp.write(start_model_out)
 
-        weights_stamp_filename = 'weights_stamp_untrimmed_unpix.fits'
-        weights_stamp_out = os.path.join(self.outdir,weights_stamp_filename)
-        self.weights_stamp.write( weights_stamp_out )
+        #weights_stamp_filename = 'weights_stamp_untrimmed_unpix.fits'
+        #weights_stamp_out = os.path.join(self.outdir,weights_stamp_filename)
+        #self.weights_stamp.write( weights_stamp_out )
 
-        self.model_img = pf.open(start_model_out)[0].data
-        self.real_data_stamp_tobepixelated = pf.open(start_model_out)[0].data
-        self.weights_stamp_tobepixelated = pf.open(weights_stamp_out)[0].data
+        #self.model_img = pf.open(start_model_out)[0].data
+        self.model_img = self.real_data_stamp.array
+        self.real_data_stamp_tobepixelated = self.real_data_stamp.array
+        #self.real_data_stamp_tobepixelated = pf.open(start_model_out)[0].data
+        #self.weights_stamp_tobepixelated = pf.open(weights_stamp_out)[0].data
+        self.weights_stamp_tobepixelated = self.weights_stamp.array
 
         self.model_img_pix = self.pixelize( self.model_img )
         self.real_data_stamp_pixelated = self.pixelize( self.real_data_stamp_tobepixelated )
@@ -204,8 +206,10 @@ class GalsimKernel:
         self.thischisq = 9999
         t1 = time.time()
         counter = 0
-
-        while self.thischisq > self.satisfactory:
+        t2 = time.time()
+        #while self.thischisq > self.satisfactory:
+        while t2-t1 < 1500.:
+            t2 = time.time()
             counter += 1
             self.accepted_int += 1
             #print 'Press Enter to continue'
@@ -379,6 +383,7 @@ class GalsimKernel:
 
 
     def plot_pixel_histograms( self ):
+        import pylab as P
         data = np.load(self.results_npz)
         pixel_history = data['pixel_history']
         sim_stamp = data['simulated_stamp']
@@ -386,7 +391,7 @@ class GalsimKernel:
 
         pixel_vec = []
         for step in pixel_history:
-            pixel_vec.append(step[0,0])
+            pixel_vec.append(step[0,1])
         pixel_vec_np = np.asarray(pixel_vec)
         #n, bins, patches = P.hist(pixel_vec_np, 100, histtype='stepfilled')
         #P.setp(patches, 'facecolor', 'g', 'alpha', 0.75)
@@ -479,6 +484,6 @@ if __name__=='__main__':
                                             , results_tag = 'test'
                                             )
     
-    #test.run()
-    test.plot_pixel_histograms()
+    test.run()
+    #test.plot_pixel_histograms()
 
