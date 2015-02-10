@@ -208,7 +208,7 @@ class GalsimKernel:
         counter = 0
         t2 = time.time()
         #while self.thischisq > self.satisfactory:
-        while t2-t1 < 500.:
+        while t2-t1 < 1500.:
             t2 = time.time()
             counter += 1
             self.accepted_int += 1
@@ -383,6 +383,8 @@ class GalsimKernel:
 
 
     def plot_pixel_histograms( self ):
+        import matplotlib
+        matplotlib.use('Agg')
         import pylab as P
         data = np.load(self.results_npz)
         pixel_history = data['pixel_history']
@@ -407,18 +409,24 @@ class GalsimKernel:
         pixel4_vec_np = np.asarray(pixel4_vec)  
         #n, bins, patches = P.hist(pixel_vec_np, 100, histtype='stepfilled')
         #P.setp(patches, 'facecolor', 'g', 'alpha', 0.75)
+        P.figure(1)
         P.plot(np.arange(0,len(pixel1_vec_np)),pixel1_vec_np)
         P.plot(np.arange(0,len(pixel2_vec_np)),pixel2_vec_np)
         P.plot(np.arange(0,len(pixel3_vec_np)),pixel3_vec_np)
         P.plot(np.arange(0,len(pixel4_vec_np)),pixel4_vec_np)
-        P.show()
-        n, bins, patches = P.hist(pixel1_vec_np, 100, histtype='stepfilled',alpha=.3)
-        P.show()
-        n, bins, patches = P.hist(pixel2_vec_np, 100, histtype='stepfilled',alpha=.3)
-        P.show()
-        n, bins, patches = P.hist(pixel3_vec_np, 100, histtype='stepfilled',alpha=.3)
-        n, bins, patches = P.hist(pixel4_vec_np, 100, histtype='stepfilled',alpha=.3)
-        P.show()
+        out = os.path.join(self.outdir,'pixel_history.png')
+        P.savefig(out)
+        P.figure(2)
+        n, bins, patches = P.hist(pixel1_vec_np[50000:], 100, histtype='stepfilled',alpha=.3)
+        out = os.path.join(self.outdir,'pixel1_histogram.png')
+        P.savefig(out)
+        P.figure(3)
+        n, bins, patches = P.hist(pixel2_vec_np[50000:], 100, histtype='stepfilled',alpha=.3)
+        out = os.path.join(self.outdir,'pixel2_histogram.png')
+        P.savefig(out)
+        #n, bins, patches = P.hist(pixel3_vec_np, 100, histtype='stepfilled',alpha=.3)
+        #n, bins, patches = P.hist(pixel4_vec_np, 100, histtype='stepfilled',alpha=.3)
+        #P.show()
 
         return
 
@@ -507,6 +515,6 @@ if __name__=='__main__':
                                             , results_tag = 'pix_1arcsec'
                                             )
     
-    test.run()
-    #test.plot_pixel_histograms()
+    #test.run()
+    test.plot_pixel_histograms()
 
