@@ -381,6 +381,14 @@ class GalsimKernel:
         #print pix_img.shape
         return pix_img
 
+    def summarize( self ):
+        data = np.load(self.results_npz)
+        pixel_history = data['pixel_history']
+        sim_stamp = data['simulated_stamp']
+        real_stamp = data['data_stamp']
+
+        last_model_pixels = pixel_history[-1]
+        print last_model_pixels[0,0]
 
     def plot_pixel_histograms( self ):
         import matplotlib
@@ -393,12 +401,16 @@ class GalsimKernel:
 
         pixel1_vec = []
         for step in pixel_history:
-            pixel1_vec.append(step[0,1])
+            pixel1_vec.append(step[2,1])
         pixel1_vec_np = np.asarray(pixel1_vec)
+        pixel1_weight = self.weights_stamp.array[2,1]
+        pixel1_val = self.real_data_stamp.array[2,1]
         pixel2_vec = []
         for step in pixel_history:
-            pixel2_vec.append(step[0,5])
+            pixel2_vec.append(step[2,5])
         pixel2_vec_np = np.asarray(pixel2_vec)
+        pixel2_weight = self.weights_stamp.array[2,5]
+        pixel2_val = self.real_data_stamp.array[2,5]
         pixel3_vec = []
         for step in pixel_history:
             pixel3_vec.append(step[2,4])
@@ -418,10 +430,22 @@ class GalsimKernel:
         P.savefig(out)
         P.figure(2)
         n, bins, patches = P.hist(pixel1_vec_np[50000:], 100, histtype='stepfilled',alpha=.3)
+        P.text(150, 800, 'Hist Mean: '+str(np.mean(pixel1_vec_np[50000:])) + '\n' +
+                        'Pix Real Value: ' + str(pixel1_val) + '\n' +
+                        'Hist Stdev: '+str(np.std(pixel1_vec_np[50000:])) + '\n' + 
+                        'Pixel sigma: '+str((1/pixel1_weight)**.5),
+                        style='italic',
+                        bbox={'facecolor':'red', 'alpha':0.5, 'pad':10})
         out = os.path.join(self.outdir,'pixel1_histogram.png')
         P.savefig(out)
         P.figure(3)
         n, bins, patches = P.hist(pixel2_vec_np[50000:], 100, histtype='stepfilled',alpha=.3)
+        P.text(150, 800, 'Hist Mean: '+str(np.mean(pixel2_vec_np[50000:])) + '\n' +
+                        'Pix Real Value: ' + str(pixel2_val) + '\n' +
+                        'Hist Stdev: '+str(np.std(pixel2_vec_np[50000:])) + '\n' +
+                        'Pixel Sigma: '+str((1/pixel2_weight)**.5),
+                        style='italic',
+                        bbox={'facecolor':'red', 'alpha':0.5, 'pad':10})
         out = os.path.join(self.outdir,'pixel2_histogram.png')
         P.savefig(out)
         #n, bins, patches = P.hist(pixel3_vec_np, 100, histtype='stepfilled',alpha=.3)
