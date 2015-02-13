@@ -31,14 +31,14 @@ class GalsimKernel:
     """
 
     def __init__( self 
-                 , real_img # whole image, not stamp
-                 , model_img # whole image, not stamp, WITHOUT SN
+                 , real_images
                  , file_path = ''
-                 , galpos_ra = 100
-                 , galpos_dec = 100
-                 , SN_RA_guess = 0 # arcsec from center of entire image (not stamp)
-                 , SN_DEC_guess = 0 # arsec from center of entire image (not stamp)
-                 , SN_flux_guess = 0.0
+                 , which_filters = ['g']
+                 , galpos_ras = [100]
+                 , galpos_decs = [100]
+                 , SN_RA_guess = [0] # arcsec from center of entire image (not stamp)
+                 , SN_DEC_guess = [0] # arsec from center of entire image (not stamp)
+                 , SN_flux_guess = [0.0]
                  , satisfactory = 39 # process is iterated until chisq reaches this value
                  , stamp_RA = 18
                  , stamp_DEC = 18
@@ -516,28 +516,43 @@ if __name__=='__main__':
     print 'Started Reading'
     query, query_wheres, image_paths, exposures = read_query( query_file, image_dir )
 
-    image_num = 0
+    image_nums = [0,1,2]
 
-    real_img_without_SN = str(image_paths[image_num]).strip('[').strip(']').replace("'",'')
-    psf_file = real_img_without_SN.split('.')[0]+'.psf'
-    weights_file = real_img_without_SN.split('.')[0]+'.weight.fits'
-    this_exposure_and_ccd = query_wheres[exposures[image_num]]
+    psf_files = []
+    real_images = []
+    weights_files = []
+    this_exposure_and_ccd = []
+    filters = []
+    [ real_images.append(str(image_paths[image_num]).strip('[').strip(']').replace("'",'')) for image_num in image_nums ]
+    [ psf_files.append(i.split('.')[0]+'.psf') for i in real_images ]
+    [ filters.append(i.split('/')[-2].split('_')[0]) for i in real_images ]
+    [ weights_files.append(i.split('.')[0]+'.weight.fits') for i in real_images ]
+    [ this_exposure_and_ccd.append(query_wheres[exposures[image_num]]) for image_num in image_nums]
     
-    print real_img_without_SN
-    print psf_file
+    galpos_ras = []
+    galpos_decs = []
+    [ galpos_ras.append(np.array(query['x'])[this_exposure_and_ccd[i]]) for i in np.arange(len(image_nums))] #in pixels
+    [ galpos_decs.append(np.array(query['y'])[this_exposure_and_ccd[i]]) for i in np.arange(len(image_nums))]
 
-    galpos_ra = np.array(query['x'])[this_exposure_and_ccd] #in pixels
-    galpos_dec = np.array(query['y'])[this_exposure_and_ccd] #in pixels
+    print real_images
+    print weights_files
+    print psf_files
+    print galpos_ras
+    print galpos_decs
+    print filters
+    RA AND DEC PIXELS ARE WRONG FOR THE THIRD IMAGE
+    raw_input()
 
     # Initial guess for model is real img without SN
-    test = GalsimKernel( real_img_without_SN, real_img_without_SN
-                                            , psf_file = psf_file
-                                            , weights_file = weights_file
-                                            , outdir = outdir 
-                                            , galpos_ra = galpos_ra
-                                            , galpos_dec = galpos_dec
-                                            , results_tag = 'pix_1arcsec'
-                                            )
+    test = GalsimKernel( real_images
+                        , which_filters = filters
+                        , psf_files = psf_files
+                        , weights_files = weights_files
+                        , outdir = outdir 
+                        , galpos_ra = galpos_ras
+                        , galpos_dec = galpos_decs
+                        , results_tag = 'pix_1arcsec'
+                        )
     
     #test.run()
     test.plot_pixel_histograms()
