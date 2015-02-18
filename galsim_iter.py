@@ -457,30 +457,57 @@ class GalsimKernel:
 def read_query( file, image_dir ):
     query = rdcol.read( file, 1, 2, '\t')
     images, exposure_nums, field_ccds = get_all_image_names( image_dir )
+    #print images
+    #raw_input()
     #print np.array( query['Exposure'] )
     #raw_input()
     #print exposure_nums
     #raw_input()
     exposures = np.array( query['Exposure'] )
     ccds = np.array( query['Field-CCD'], dtype= 'string' )
-
+    filts = np.array( query['Filter'], dtype= 'string' )
 
     image_paths = []
     exposures_ = []
+    query_ra_pix = np.array( query['x'] )
+    query_dec_pix = np.array( query['y'] )
+
+    ra_pix = []
+    dec_pix = []
+    filter_out = []
     
     query_wheres = {}
 
-    for exposure in np.unique( exposures ):
-        for ccd in np.unique( ccds ):
-            this_ccd = int(ccd.split('-')[-1])
+    for exposure in np.sort(np.unique( exposures )):
+        print 'exposure: ' + str(exposure)
+        for ccd in np.sort(np.unique( ccds )):
+                this_ccd = int(ccd.split('-')[-1])
+                query_wheres[ exposure ] = [ (exposures == exposure) & (ccds == ccd) ]
+                #print np.array(query['Exposure'])[ (exposures == exposure) & (ccds == ccd) ]
+                #print np.array(query['Filter'])[ (exposures == exposure) & (ccds == ccd) ]
+                #BUG IS HERE!! 
+                #print images[ (exposure_nums == str(int(exposure))) & (field_ccds == this_ccd)  ]
+                #raw_input()
 
-            query_wheres[ exposure ] = [ (exposures == exposure) & (ccds == ccd) ]
+                image_paths.append( images[ (exposure_nums == str(int(exposure))) & (field_ccds == this_ccd) ]) 
+                
+                ra_pix.append( query_ra_pix[ (exposures == exposure) & (ccds == ccd) ] )
+                dec_pix.append( query_dec_pix[ (exposures == exposure) & (ccds == ccd) ] )
+                filter_out.append( filts[ (exposures == exposure) & (ccds == ccd) ] )
 
-            image_paths.append( images[ (exposure_nums == str(int(exposure))) & (field_ccds == this_ccd) ]) 
-    
+                #print images[ (exposure_nums == str(int(exposure))) & (field_ccds == this_ccd) ]
+                #print query_ra_pix[ (exposures == exposure) & (ccds == ccd) ] 
+                #print query_dec_pix[ (exposures == exposure) & (ccds == ccd) ]
+                #raw_input()
+
     print 'Made Image Arrays'
-    return query, query_wheres, image_paths, exposures
-
+    print query.keys()
+    print query['Exposure']
+    print query['Filter']
+    print query['y']
+    print query['x']
+    #return query, query_wheres, image_paths, exposures
+    return image_paths, ra_pix, dec_pix, filter_out
 
 def get_all_image_names( image_dir ):
     images = []
@@ -506,7 +533,11 @@ def get_all_image_names( image_dir ):
                             #/path_to_file/SNp1_228717_SN-E1_tile20_g_01.fits
 
     print 'Got Images'
-    return np.array(images,dtype='string'), np.array(exposure_nums), np.array(field_ccds,dtype='int')
+    imgs = np.array(images,dtype='string')
+    exp_nums = np.array(exposure_nums)
+    fld_ccds = np.array(field_ccds,dtype='int')
+    sort = np.argsort(exp_nums)
+    return imgs[sort], exp_nums[sort], fld_ccds[sort]
 
 if __name__=='__main__':
     image_dir = '/global/scratch2/sd/dbrout/'
@@ -514,9 +545,11 @@ if __name__=='__main__':
     query_file = './queries/test.txt'
 
     print 'Started Reading'
-    query, query_wheres, image_paths, exposures = read_query( query_file, image_dir )
+    #query, query_wheres, image_paths, exposures = read_query( query_file, image_dir )
+    image_paths, ra_pix, dec_pix, filters_out = read_query( query_file, image_dir )
 
-    image_nums = [0,1,2]
+
+    image_nums = [0,1,2,3,4]
 
     psf_files = []
     real_images = []
@@ -525,14 +558,15 @@ if __name__=='__main__':
     filters = []
     [ real_images.append(str(image_paths[image_num]).strip('[').strip(']').replace("'",'')) for image_num in image_nums ]
     [ psf_files.append(i.split('.')[0]+'.psf') for i in real_images ]
-    [ filters.append(i.split('/')[-2].split('_')[0]) for i in real_images ]
+    #[ filters.append(i.split('/')[-2].split('_')[0]) for i in real_images ]
     [ weights_files.append(i.split('.')[0]+'.weight.fits') for i in real_images ]
-    [ this_exposure_and_ccd.append(query_wheres[exposures[image_num]]) for image_num in image_nums]
+    #[ this_exposure_and_ccd.append(query_wheres[exposures[image_num]]) for image_num in image_nums]
     
     galpos_ras = []
     galpos_decs = []
-    [ galpos_ras.append(np.array(query['x'])[this_exposure_and_ccd[i]]) for i in np.arange(len(image_nums))] #in pixels
-    [ galpos_decs.append(np.array(query['y'])[this_exposure_and_ccd[i]]) for i in np.arange(len(image_nums))]
+    [ galpos_ras.append(ra_pix[i]) for i in image_nums] #in pixels
+    [ galpos_decs.append(dec_pix[i]) for i in image_nums]
+    [ filters.append(filters_out[i]) for i in image_nums]
 
     print real_images
     print weights_files
@@ -540,7 +574,7 @@ if __name__=='__main__':
     print galpos_ras
     print galpos_decs
     print filters
-    RA AND DEC PIXELS ARE WRONG FOR THE THIRD IMAGE
+    #RA AND DEC PIXELS ARE WRONG FOR THE THIRD IMAGE
     raw_input()
 
     # Initial guess for model is real img without SN
