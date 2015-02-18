@@ -38,24 +38,30 @@ class GalsimKernel:
                  , galpos_decs = [100]
                  , SN_RA_guess = [0] # arcsec from center of entire image (not stamp)
                  , SN_DEC_guess = [0] # arsec from center of entire image (not stamp)
-                 , SN_flux_guess = [0.0]
                  , satisfactory = 39 # process is iterated until chisq reaches this value
                  , stamp_RA = 18
                  , stamp_DEC = 18
-                 , psf_file = ''
-                 , weights_file = ''
+                 , psf_files = ''
+                 , weights_files = ''
                  , outdir = None
                  , trim_edges = 1 # num pixels
                  , coarse_pixel_scale = 1.0 #arcsec
                  , results_tag = 'test' 
                  , burn_in_chisq = 99999
+                 , model_img_index = 0
                  ):
 
 
-        real_img_file = os.path.join( file_path, real_img )
-        weights_file_long = os.path.join( file_path, weights_file )
-        model_img_file = os.path.join( file_path, real_img )
-        self.DES_PSFEx_file = os.path.join( file_path, psf_file )
+        real_img_files = []
+        [ real_img_files.append(os.path.join( file_path, real_image )) for real_image in real_images ]
+        
+        weights_files_long = []
+        [ weights_files_long.append(os.path.join( file_path, weights_file )) for weights_file in weights_files ] 
+        
+        #model_img_file = os.path.join( file_path, real_images[model_img_index] )
+        
+        self.DES_PSFEx_file = []
+        [ self.DES_PSFEx_file.append(os.path.join( file_path, psf_file )) for psf_file in psf_files ]
 
         self.results_npz = os.path.join( outdir, 'RESULTS_'+results_tag+'.npz' )
 
@@ -63,25 +69,31 @@ class GalsimKernel:
             os.makedirs(outdir)
         self.outdir = outdir
 
+        self.real_fits = []
+        [ self.real_fits.append(pf.open( real_img_file )) for real_img_file in real_img_files ]
+        
+        self.real_imgs = []
+        [ self.real_imgs.append(real_fit[0].data) for real_fit in self.real_fits ]
+        self.real_headers = []
+        [ self.real_headers.append(self.real_fit[0].header) for real_fit in self.real_fits ] 
+        self.weights_fits = []
+        [ self.weights_fits.append(pf.open( weights_file_long )) for weights_file_long in weights_files_log ]
+        self.weights = []
+        [ self.weights.append(self.weights_fit[0].data) for weights_fit in self.weights_fits ]
 
-        self.real_fits = pf.open( real_img_file )
-        self.real_img = self.real_fits[0].data
-        self.real_header = self.real_fits[0].header
-        self.weights_fits = pf.open( weights_file_long )
-        self.weights = self.weights_fits[0].data
-
-        self.model_img = self.real_img
+        ##SET THE MODEL IMAGE TO ONE OF THE REAL IMAGES (SET BY INPUT INDEX)
+        #self.model_img = self.real_imgs[model_img_index]
 
         self.pixel_scale = self.real_header['PIXSCAL1']
         self.coarse_factor = self.pixel_scale/coarse_pixel_scale
         #self.pixel_scale = 0.2634
 
-        self.SN_flux = SN_flux_guess
-        self.SN_RA_guess = SN_RA_guess
-        self.SN_DEC_guess = SN_DEC_guess
+        self.SN_fluxes = np.zeros(len(self.real_imgs))#initialize to zero
+        self.SN_RA_guesses = np.zeros(len(self.real_imgs))#initialize to zero
+        self.SN_DEC_guesses = np.zeros(len(self.real_imgs))#initialize to zero
 
-        self.galpos_ra = float( galpos_ra )
-        self.galpos_dec = float( galpos_dec )
+        self.galpos_ras = float( galpos_ras )
+        self.galpos_decs = float( galpos_decs )
         self.stamp_RA = float( stamp_RA )
         self.stamp_DEC = float( stamp_DEC )
 
@@ -90,22 +102,27 @@ class GalsimKernel:
         self.burn_in_chisq = burn_in_chisq
 
         # Create supernova point source (ie. very very small gaussian)
-        self.sn = galsim.Gaussian( sigma = 1.e-8, flux = self.SN_flux )
+        self.sns = []
+        [ self.sns.append(galsim.Gaussian( sigma = 1.e-8, flux = SN_flux )) for SN_flux in self.SN_fluxes]
 
-        # Shift SN relative to galaxy center
-        self.sn = self.sn.shift(galsim.PositionD( self.SN_RA_guess, self.SN_DEC_guess ))#NEED TO DOUBLE CHECK RA vs DEC
+        # Shift SNs relative to galaxy center
+        [ self.sns[i].shift(galsim.PositionD( self.SN_RA_guesses[i], self.SN_DEC_guesses[i] )) for i in np.arange(len(self.SN_RA_guesses))]
         
         #get wcs information from real data file (this doesnt change as model changes)                                                
-        self.wcs = galsim.FitsWCS( real_img_file )
+        self.wcss = []
+        [ self.wcss.append(galsim.FitsWCS( real_img_file )) for real_img_file in real_img_files ]
 
         # Get psf over the entire ccd
-        self.psf_model = galsim.des.DES_PSFEx( self.DES_PSFEx_file, wcs=self.wcs)
+        self.psf_models = []
+        [ self.psf_models.append(galsim.des.DES_PSFEx( self.DES_PSFEx_files[i], wcs=self.wcss[i])) for i in np.arange(len(self.wcss)) ]
 
         # position of galaxy in original image. (pixels) (doesnt iterate) NEED TO FIGURE OUT RA VS DEC
-        self.image_pos = galsim.PositionD( self.galpos_ra, self.galpos_dec )
+        self.image_poss = []
+        [ self.image_poss.append(galsim.PositionD( self.galpos_ras, self.galpos_decs )) for i in np.arange(len(self.galpos_ras)) ]
 
         # We just care about psf locally at the image pos
-        self.psf = self.psf_model.getPSF( self.image_pos )
+        self.psfs = []
+        [ self.psf.append(self.psf_model.getPSF( self.image_pos )) for image_pos in image_poss]
 
         # DEMO 7. Gets rid of FFT Runtime Error
         # http://stackoverflow.com/questions/24966419/fft-runtime-error-in-running-galsim?newreg=fb140d2381ff47cda008d3ade724ed59
@@ -113,60 +130,56 @@ class GalsimKernel:
 
         # Read in real image for comparison to model
         #NEED TO FIGURE OUT HOW/IF THIS NEEDS TO BE PIXELIZED
-        full_real_data_image = galsim.fits.read( real_img_file )
-        full_weights = galsim.fits.read( weights_file_long )
-        #full_real_data_image = pf.open( real_img_file )[0].data
+        full_real_data_images = []
+        [full_real_data_images.append(galsim.fits.read( real_img_file )) for real_img_file in real_img_files]
+        full_weights = []
+        [ full_weights.append(galsim.fits.read( weights_file_long )) for weights_file_long in weights_files_long ]
 
-        # Chop out real data stamp NEED TO DOUBLE CHECK RA VS DEC.
-        self.real_data_stamp = full_real_data_image[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA ) 
+        # Chop out real data stamp for each epoch
+        self.real_data_stamps = []
+        [ self.real_data_stamps.append(full_real_data_images[i][ galsim.BoundsI( int( self.galpos_ras[i]-self.stamp_RA ) 
+                                                                    , int( self.galpos_ras[i]+self.stamp_RA )
+                                                                    , int( self.galpos_decs[i]-self.stamp_DEC )
+                                                                    , int( self.galpos_decs[i]+self.stamp_DEC )
+                                                                    ) ]) for i in np.arange(len(full_real_data_images)) ]
+        # Chop out an uncertainty stamp for each epoch
+        self.weights_stamps = []
+        [ self.weights_stamp.append(full_weights[i][ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA ) 
                                                                     , int( self.galpos_ra+self.stamp_RA )
                                                                     , int( self.galpos_dec-self.stamp_DEC )
                                                                     , int( self.galpos_dec+self.stamp_DEC )
-                                                                    ) ]
-        self.weights_stamp = full_weights[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA ) 
-                                                                    , int( self.galpos_ra+self.stamp_RA )
-                                                                    , int( self.galpos_dec-self.stamp_DEC )
-                                                                    , int( self.galpos_dec+self.stamp_DEC )
-                                                                    ) ]
+                                                                    ) ]) for i in np.arange(len(self.full_weights)) ]
 
-        #start_model_filename = 'start_model.fits'
-        #start_model_out = os.path.join(self.outdir,start_model_filename)
-        #self.real_data_stamp.write(start_model_out)
 
-        #weights_stamp_filename = 'weights_stamp_untrimmed_unpix.fits'
-        #weights_stamp_out = os.path.join(self.outdir,weights_stamp_filename)
-        #self.weights_stamp.write( weights_stamp_out )
+        # SET THE MODEL TO THE REAL DATA SPECIFIED BY THE INDEX GIVEN
+        self.model_img = self.real_data_stamps[model_img_index].array
 
-        #self.model_img = pf.open(start_model_out)[0].data
-        self.model_img = self.real_data_stamp.array
         self.real_data_stamp_tobepixelated = self.real_data_stamp.array
-        #self.real_data_stamp_tobepixelated = pf.open(start_model_out)[0].data
-        #self.weights_stamp_tobepixelated = pf.open(weights_stamp_out)[0].data
+
         self.weights_stamp_tobepixelated = self.weights_stamp.array
 
-        self.model_img_pix = self.pixelize( self.model_img )
-        self.real_data_stamp_pixelated = self.pixelize( self.real_data_stamp_tobepixelated )
-        self.weights_stamp_pixelated = self.pixelize( self.weights_stamp_tobepixelated )
+        #self.model_img_pix = self.pixelize( self.model_img )
+        self.real_data_stamps_pixelated = []
+        [ self.real_data_stamps_pixelated.append(self.pixelize( real_data_stamp )) for real_data_stamp in self.real_data_stamps ]
+        self.weights_stamps_pixelated = []
+        [ self.weights_stamps_pixelated.append(self.pixelize( weights_stamp )) for weights_stamp in self.weights_stamps ]
         self.model_img_pix = self.model_img
 
         self.model = np.array( self.model_img_pix, dtype=float )
         self.model = np.ascontiguousarray(np.flipud(np.fliplr(self.model.T)))
 
 
-        self.real_data_stamp_trimmed = self.real_data_stamp_pixelated[ self.trim_edges:-self.trim_edges
+        self.real_data_stamps_trimmed = []
+        [ self.real_data_stamps_trimmed.append( real_data_stamp_pixelated[ self.trim_edges:-self.trim_edges
                                                                         , self.trim_edges:-self.trim_edges
-                                                                     ]
+                                                                     ] ) for real_data_stamp_pixelated in self.real_data_stamps_pixelated ]
 
-        self.weights_stamp_trimmed = self.weights_stamp_pixelated[ self.trim_edges:-self.trim_edges
+        self.weights_stamps_trimmed = []
+        [ self.weights_stamps_trimmed.append(weights_stamp_pixelated[ self.trim_edges:-self.trim_edges
                                                                         , self.trim_edges:-self.trim_edges
-                                                                     ]
-        #self.real_data_stamp_trimmed = full_real_data_image[ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA+self.trim_edges ) 
-        #                                                            ,int( self.galpos_ra+self.stamp_RA-self.trim_edges )
-        #                                                            ,int( self.galpos_dec-self.stamp_DEC+self.trim_edges )
-        #                                                            ,int( self.galpos_dec+self.stamp_DEC-self.trim_edges )
-        #                                                            ) ]
+                                                                     ]) for weights_stamp_pixelated in self.weights_stamps_pixelated ]
 
-        real_data_filename = 'test_data_out.fits'
+        '''real_data_filename = 'test_data_out.fits'
         real_data_file_out = os.path.join( self.outdir, real_data_filename )
         os.system('rm '+real_data_file_out)
         pf.writeto(real_data_file_out, self.real_data_stamp_trimmed)
@@ -185,6 +198,7 @@ class GalsimKernel:
         self.sim_full_filename = 'test_sim_pix_out.fits'
         self.simoutfile = os.path.join(self.outdir,self.sim_filename)
         self.simpixout = os.path.join(self.outdir,self.sim_full_filename)
+        '''
 
         '''
         Set iteration parameters
@@ -192,7 +206,7 @@ class GalsimKernel:
         self.chisq = []
         self.chisq.append(9999)
         self.model_pixels = []
-        [ self.model_pixels.append([]) for i in np.nditer(self.real_stamp_array)]
+        [ self.model_pixels.append([]) for i in np.nditer(self.real_data_stamps_trimmed[0])]
 
         self.pixel_history = []
         self.accepted_history = 0.5
@@ -214,18 +228,12 @@ class GalsimKernel:
             self.accepted_int += 1
             #print 'Press Enter to continue'
             #raw_input()
-
-            self.adjust_sn()
-            #print 'Done adjusting SN'
             
             self.adjust_model() 
-            #print 'Done adjusting model'
             
             self.kernel()
-            #print 'Executed Kernel'
             
-            self.thischisq = self.compare_model_and_sim()
-            #print 'Correlated ' + str( self.thischisq )
+            self.thischisq = self.compare_sim_and_real()
             
             #decide whether to accept new values
             accept_bool = self.accept()
@@ -363,7 +371,7 @@ class GalsimKernel:
     """
     Compute Chi Squared for 2 maps and an 1/variance map.
     """
-    def compare_model_and_sim( self ):
+    def compare_sim_and_real( self ):
         sim_image_ravel = self.simulated_image.ravel()
         chisq = 0.0
         i = -1
@@ -454,15 +462,10 @@ class GalsimKernel:
 
         return
 
-def read_query( file, image_dir ):
+def read_query( file, image_dir, image_nums):
     query = rdcol.read( file, 1, 2, '\t')
     images, exposure_nums, field_ccds = get_all_image_names( image_dir )
-    #print images
-    #raw_input()
-    #print np.array( query['Exposure'] )
-    #raw_input()
-    #print exposure_nums
-    #raw_input()
+
     exposures = np.array( query['Exposure'] )
     ccds = np.array( query['Field-CCD'], dtype= 'string' )
     filts = np.array( query['Filter'], dtype= 'string' )
@@ -479,15 +482,10 @@ def read_query( file, image_dir ):
     query_wheres = {}
 
     for exposure in np.sort(np.unique( exposures )):
-        print 'exposure: ' + str(exposure)
+        #print 'exposure: ' + str(exposure)
         for ccd in np.sort(np.unique( ccds )):
                 this_ccd = int(ccd.split('-')[-1])
                 query_wheres[ exposure ] = [ (exposures == exposure) & (ccds == ccd) ]
-                #print np.array(query['Exposure'])[ (exposures == exposure) & (ccds == ccd) ]
-                #print np.array(query['Filter'])[ (exposures == exposure) & (ccds == ccd) ]
-                #BUG IS HERE!! 
-                #print images[ (exposure_nums == str(int(exposure))) & (field_ccds == this_ccd)  ]
-                #raw_input()
 
                 image_paths.append( images[ (exposure_nums == str(int(exposure))) & (field_ccds == this_ccd) ]) 
                 
@@ -495,19 +493,22 @@ def read_query( file, image_dir ):
                 dec_pix.append( query_dec_pix[ (exposures == exposure) & (ccds == ccd) ] )
                 filter_out.append( filts[ (exposures == exposure) & (ccds == ccd) ] )
 
-                #print images[ (exposure_nums == str(int(exposure))) & (field_ccds == this_ccd) ]
-                #print query_ra_pix[ (exposures == exposure) & (ccds == ccd) ] 
-                #print query_dec_pix[ (exposures == exposure) & (ccds == ccd) ]
-                #raw_input()
 
-    print 'Made Image Arrays'
-    print query.keys()
-    print query['Exposure']
-    print query['Filter']
-    print query['y']
-    print query['x']
-    #return query, query_wheres, image_paths, exposures
-    return image_paths, ra_pix, dec_pix, filter_out
+    psf_files = []
+    real_images = []
+    weights_files = []
+    filters = []
+    [ real_images.append(str(image_paths[image_num]).strip('[').strip(']').replace("'",'')) for image_num in image_nums ]
+    [ psf_files.append(i.split('.')[0]+'.psf') for i in real_images ]
+    [ weights_files.append(i.split('.')[0]+'.weight.fits') for i in real_images ]
+    
+    galpos_ras = []
+    galpos_decs = []
+    [ galpos_ras.append(ra_pix[i]) for i in image_nums] #in pixels
+    [ galpos_decs.append(dec_pix[i]) for i in image_nums]
+    [ filters.append(filter_out[i]) for i in image_nums]
+
+    return real_images, weights_files, psf_files, filters, galpos_ras, galpos_decs
 
 def get_all_image_names( image_dir ):
     images = []
@@ -540,42 +541,14 @@ def get_all_image_names( image_dir ):
     return imgs[sort], exp_nums[sort], fld_ccds[sort]
 
 if __name__=='__main__':
+    
     image_dir = '/global/scratch2/sd/dbrout/'
     outdir = '/global/u1/d/dbrout/FinalPhot/out'
     query_file = './queries/test.txt'
 
-    print 'Started Reading'
-    #query, query_wheres, image_paths, exposures = read_query( query_file, image_dir )
-    image_paths, ra_pix, dec_pix, filters_out = read_query( query_file, image_dir )
-
-
     image_nums = [0,1,2,3,4]
 
-    psf_files = []
-    real_images = []
-    weights_files = []
-    this_exposure_and_ccd = []
-    filters = []
-    [ real_images.append(str(image_paths[image_num]).strip('[').strip(']').replace("'",'')) for image_num in image_nums ]
-    [ psf_files.append(i.split('.')[0]+'.psf') for i in real_images ]
-    #[ filters.append(i.split('/')[-2].split('_')[0]) for i in real_images ]
-    [ weights_files.append(i.split('.')[0]+'.weight.fits') for i in real_images ]
-    #[ this_exposure_and_ccd.append(query_wheres[exposures[image_num]]) for image_num in image_nums]
-    
-    galpos_ras = []
-    galpos_decs = []
-    [ galpos_ras.append(ra_pix[i]) for i in image_nums] #in pixels
-    [ galpos_decs.append(dec_pix[i]) for i in image_nums]
-    [ filters.append(filters_out[i]) for i in image_nums]
-
-    print real_images
-    print weights_files
-    print psf_files
-    print galpos_ras
-    print galpos_decs
-    print filters
-    #RA AND DEC PIXELS ARE WRONG FOR THE THIRD IMAGE
-    raw_input()
+    real_images, weights_files, psf_files, filters, galpos_ras, galpos_decs = read_query( query_file, image_dir, image_nums )
 
     # Initial guess for model is real img without SN
     test = GalsimKernel( real_images
@@ -583,8 +556,8 @@ if __name__=='__main__':
                         , psf_files = psf_files
                         , weights_files = weights_files
                         , outdir = outdir 
-                        , galpos_ra = galpos_ras
-                        , galpos_dec = galpos_decs
+                        , galpos_ras = galpos_ras
+                        , galpos_decs = galpos_decs
                         , results_tag = 'pix_1arcsec'
                         )
     
