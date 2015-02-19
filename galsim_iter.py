@@ -60,8 +60,8 @@ class GalsimKernel:
         
         #model_img_file = os.path.join( file_path, real_images[model_img_index] )
         
-        self.DES_PSFEx_file = []
-        [ self.DES_PSFEx_file.append(os.path.join( file_path, psf_file )) for psf_file in psf_files ]
+        self.DES_PSFEx_files = []
+        [ self.DES_PSFEx_files.append(os.path.join( file_path, psf_file )) for psf_file in psf_files ]
 
         self.results_npz = os.path.join( outdir, 'RESULTS_'+results_tag+'.npz' )
 
@@ -75,16 +75,16 @@ class GalsimKernel:
         self.real_imgs = []
         [ self.real_imgs.append(real_fit[0].data) for real_fit in self.real_fits ]
         self.real_headers = []
-        [ self.real_headers.append(self.real_fit[0].header) for real_fit in self.real_fits ] 
+        [ self.real_headers.append(real_fit[0].header) for real_fit in self.real_fits ] 
         self.weights_fits = []
-        [ self.weights_fits.append(pf.open( weights_file_long )) for weights_file_long in weights_files_log ]
+        [ self.weights_fits.append(pf.open( weights_file_long )) for weights_file_long in weights_files_long ]
         self.weights = []
-        [ self.weights.append(self.weights_fit[0].data) for weights_fit in self.weights_fits ]
+        [ self.weights.append(weights_fit[0].data) for weights_fit in self.weights_fits ]
 
         ##SET THE MODEL IMAGE TO ONE OF THE REAL IMAGES (SET BY INPUT INDEX)
         #self.model_img = self.real_imgs[model_img_index]
 
-        self.pixel_scale = self.real_header['PIXSCAL1']
+        self.pixel_scale = self.real_headers[0]['PIXSCAL1']
         self.coarse_factor = self.pixel_scale/coarse_pixel_scale
         #self.pixel_scale = 0.2634
 
@@ -92,8 +92,8 @@ class GalsimKernel:
         self.SN_RA_guesses = np.zeros(len(self.real_imgs))#initialize to zero
         self.SN_DEC_guesses = np.zeros(len(self.real_imgs))#initialize to zero
 
-        self.galpos_ras = float( galpos_ras )
-        self.galpos_decs = float( galpos_decs )
+        self.galpos_ras = np.array(galpos_ras,dtype=float)
+        self.galpos_decs = np.array(galpos_decs,dtype=float )
         self.stamp_RA = float( stamp_RA )
         self.stamp_DEC = float( stamp_DEC )
 
@@ -118,11 +118,11 @@ class GalsimKernel:
 
         # position of galaxy in original image. (pixels) (doesnt iterate) NEED TO FIGURE OUT RA VS DEC
         self.image_poss = []
-        [ self.image_poss.append(galsim.PositionD( self.galpos_ras, self.galpos_decs )) for i in np.arange(len(self.galpos_ras)) ]
+        [ self.image_poss.append(galsim.PositionD( self.galpos_ras[i][0], self.galpos_decs[i][0] )) for i in np.arange(len(self.galpos_ras)) ]
 
         # We just care about psf locally at the image pos
         self.psfs = []
-        [ self.psf.append(self.psf_model.getPSF( self.image_pos )) for image_pos in image_poss]
+        [ self.psfs.append(self.psf_models[i].getPSF( self.image_poss[i] )) for i in np.arange(len(self.image_poss))]
 
         # DEMO 7. Gets rid of FFT Runtime Error
         # http://stackoverflow.com/questions/24966419/fft-runtime-error-in-running-galsim?newreg=fb140d2381ff47cda008d3ade724ed59
@@ -144,25 +144,25 @@ class GalsimKernel:
                                                                     ) ]) for i in np.arange(len(full_real_data_images)) ]
         # Chop out an uncertainty stamp for each epoch
         self.weights_stamps = []
-        [ self.weights_stamp.append(full_weights[i][ galsim.BoundsI( int( self.galpos_ra-self.stamp_RA ) 
-                                                                    , int( self.galpos_ra+self.stamp_RA )
-                                                                    , int( self.galpos_dec-self.stamp_DEC )
-                                                                    , int( self.galpos_dec+self.stamp_DEC )
-                                                                    ) ]) for i in np.arange(len(self.full_weights)) ]
+        [ self.weights_stamps.append(full_weights[i][ galsim.BoundsI( int( self.galpos_ras[i]-self.stamp_RA ) 
+                                                                    , int( self.galpos_ras[i]+self.stamp_RA )
+                                                                    , int( self.galpos_decs[i]-self.stamp_DEC )
+                                                                    , int( self.galpos_decs[i]+self.stamp_DEC )
+                                                                    ) ]) for i in np.arange(len(full_weights)) ]
 
 
         # SET THE MODEL TO THE REAL DATA SPECIFIED BY THE INDEX GIVEN
         self.model_img = self.real_data_stamps[model_img_index].array
 
-        self.real_data_stamp_tobepixelated = self.real_data_stamp.array
+        #self.real_data_stamp_tobepixelated = self.real_data_stamp.array
 
-        self.weights_stamp_tobepixelated = self.weights_stamp.array
+        #self.weights_stamp_tobepixelated = self.weights_stamp.array
 
         #self.model_img_pix = self.pixelize( self.model_img )
         self.real_data_stamps_pixelated = []
-        [ self.real_data_stamps_pixelated.append(self.pixelize( real_data_stamp )) for real_data_stamp in self.real_data_stamps ]
+        [ self.real_data_stamps_pixelated.append(self.pixelize( real_data_stamp.array )) for real_data_stamp in self.real_data_stamps ]
         self.weights_stamps_pixelated = []
-        [ self.weights_stamps_pixelated.append(self.pixelize( weights_stamp )) for weights_stamp in self.weights_stamps ]
+        [ self.weights_stamps_pixelated.append(self.pixelize( weights_stamp.array )) for weights_stamp in self.weights_stamps ]
         self.model_img_pix = self.model_img
 
         self.model = np.array( self.model_img_pix, dtype=float )
@@ -212,6 +212,7 @@ class GalsimKernel:
         self.accepted_history = 0.5
         self.accepted_int = 0
         print 'Done Innitting'
+        raw_input()
 
     """
     This will manage the iterating process
