@@ -5,7 +5,7 @@ dbrout@physics.upenn.edu
 See README.md for To Do List
 
 """
-
+print 'importing'
 import sys
 sys.path.append("/global/u1/d/dbrout/FinalPhot/lib/") 
 
@@ -18,6 +18,8 @@ import os
 import time
 import rdcol
 from scipy.ndimage.interpolation import zoom
+print 'done importing'
+print 'innitting'
 
 class GalsimKernel:
     """Pixelize the input image and use as a first guess towards a simulated image. 
@@ -32,6 +34,7 @@ class GalsimKernel:
 
     def __init__( self 
                  , real_images
+                 , exposure_nums = [0]
                  , file_path = ''
                  , which_filters = ['g']
                  , galpos_ras = [100]
@@ -51,6 +54,21 @@ class GalsimKernel:
                  , model_img_index = 0
                  ):
 
+        #NEED TO REQUIRE THAT ALL IMAGE/PSF/WEIGHTS/etc... ARE THE SAME NUMBER OF FILES/length!
+        oktogo = False
+        if len(real_images) == len(weights_files):
+            if len(real_images) == len(psf_files):
+                if len(real_images) == len(galpos_ras):
+                    if len(real_images) == len(galpos_decs):
+                        if len(real_images) == len(which_filters):
+                            if len(real_images) == len(exposure_nums):
+                                oktogo = True
+
+        if not oktogo:
+            raise AttributeError('Require that the dimensions of the following all match: \
+            \n\treal_images\n\tweights_files\n\tpsf_files\n\tgalpso_ras\n\tgalpos_decs\n\twhich_filters\n\texposure_nums')
+
+        self.exposure_nums = exposure_nums
 
         real_img_files = []
         [ real_img_files.append(os.path.join( file_path, real_image )) for real_image in real_images ]
@@ -154,11 +172,7 @@ class GalsimKernel:
         # SET THE MODEL TO THE REAL DATA SPECIFIED BY THE INDEX GIVEN
         self.model_img = self.real_data_stamps[model_img_index].array
 
-        #self.real_data_stamp_tobepixelated = self.real_data_stamp.array
 
-        #self.weights_stamp_tobepixelated = self.weights_stamp.array
-
-        #self.model_img_pix = self.pixelize( self.model_img )
         self.real_data_stamps_pixelated = []
         [ self.real_data_stamps_pixelated.append(self.pixelize( real_data_stamp.array )) for real_data_stamp in self.real_data_stamps ]
         self.weights_stamps_pixelated = []
@@ -196,6 +210,7 @@ class GalsimKernel:
 
         self.sim_filename = 'test_sim_out.fits'
         self.sim_full_filename = 'test_sim_pix_out.fits'
+        
         self.simoutfile = os.path.join(self.outdir,self.sim_filename)
         self.simpixout = os.path.join(self.outdir,self.sim_full_filename)
         '''
@@ -227,27 +242,10 @@ class GalsimKernel:
             t2 = time.time()
             counter += 1
             self.accepted_int += 1
-            #print 'Press Enter to continue'
-            #raw_input()
             
-            self.adjust_model() 
+            #This is it!
+            self.mcmc()
             
-            self.kernel()
-            
-            self.thischisq = self.compare_sim_and_real()
-            
-            #decide whether to accept new values
-            accept_bool = self.accept()
-
-            if accept_bool:
-                #print 'accepted'
-                self.accepted_history = ( self.accepted_history * self.accepted_int + 1.0 ) / ( self.accepted_int + 1 )
-                self.copy_adjusted_image_to_model()
-                self.update_pixel_history()
-                self.chisq.append(self.thischisq)
-            else:
-                self.accepted_history = ( self.accepted_history * self.accepted_int ) / ( self.accepted_int + 1 )
-                self.update_unaccepted_pixel_history()
 
         t2 = time.time()
         print 'Total Time: ' + str( t2 - t1 )
@@ -260,6 +258,27 @@ class GalsimKernel:
         os.system( 'rm ' + self.simpixout )
         pf.writeto( self.simpixout, self.simulated_image )
 
+
+    def mcmc(self):
+
+        self.adjust_model() 
+            
+        self.kernel()
+        
+        self.thischisq = self.compare_sim_and_real()
+
+        #decide whether to accept new values
+        accept_bool = self.accept()
+
+        if accept_bool:
+            #print 'accepted'
+            self.accepted_history = ( self.accepted_history * self.accepted_int + 1.0 ) / ( self.accepted_int + 1 )
+            self.copy_adjusted_image_to_model()
+            self.update_pixel_history()
+            self.chisq.append(self.thischisq)
+        else:
+            self.accepted_history = ( self.accepted_history * self.accepted_int ) / ( self.accepted_int + 1 )
+            self.update_unaccepted_pixel_history()
 
     def accept(self):
         alpha = np.exp( self.chisq[-1] - self.thischisq ) / 2.0
@@ -289,6 +308,9 @@ class GalsimKernel:
     the kernel gets iterated over...                                                                                       
     """
     def kernel( self ):
+
+        for epoch in np.arange(len(self.DES_PSFEx_files)):
+            pass
 
         # Convert model to galsim image
         self.im = galsim.Image( array = self.kicked_model, scale = self.pixel_scale ) # scale is arcsec/pixel
@@ -479,7 +501,8 @@ def read_query( file, image_dir, image_nums):
     ra_pix = []
     dec_pix = []
     filter_out = []
-    
+    exposure_nums = []
+
     query_wheres = {}
 
     for exposure in np.sort(np.unique( exposures )):
@@ -493,7 +516,7 @@ def read_query( file, image_dir, image_nums):
                 ra_pix.append( query_ra_pix[ (exposures == exposure) & (ccds == ccd) ] )
                 dec_pix.append( query_dec_pix[ (exposures == exposure) & (ccds == ccd) ] )
                 filter_out.append( filts[ (exposures == exposure) & (ccds == ccd) ] )
-
+                exposure_nums.append(exposure)
 
     psf_files = []
     real_images = []
@@ -509,7 +532,7 @@ def read_query( file, image_dir, image_nums):
     [ galpos_decs.append(dec_pix[i]) for i in image_nums]
     [ filters.append(filter_out[i]) for i in image_nums]
 
-    return real_images, weights_files, psf_files, filters, galpos_ras, galpos_decs
+    return real_images, weights_files, psf_files, filters, galpos_ras, galpos_decs, exposure_nums
 
 def get_all_image_names( image_dir ):
     images = []
@@ -549,11 +572,12 @@ if __name__=='__main__':
 
     image_nums = [0,1,2,3,4]
 
-    real_images, weights_files, psf_files, filters, galpos_ras, galpos_decs = read_query( query_file, image_dir, image_nums )
+    real_images, weights_files, psf_files, filters, galpos_ras, galpos_decs, exposure_nums = read_query( query_file, image_dir, image_nums )
 
     # Initial guess for model is real img without SN
     test = GalsimKernel( real_images
                         , which_filters = filters
+                        , exposure_nums = exposure_nums
                         , psf_files = psf_files
                         , weights_files = weights_files
                         , outdir = outdir 
