@@ -2,6 +2,8 @@
 Dillon Brout
 dbrout@physics.upenn.edu
 
+Currently only outputs real and sim images for the first epoch provided...
+
 See README.md for To Do List
 
 """
@@ -304,7 +306,7 @@ class GalsimKernel:
                                 , data_stamp = self.real_stamp
                                 )
         os.system( 'rm ' + self.simpixout )
-        pf.writeto( self.simpixout, self.simulated_image )
+        pf.writeto( self.simpixout, self.simulated_images[0] )
 
 
     def mcmc(self):
@@ -388,11 +390,12 @@ class GalsimKernel:
             #self.final_out_image.write(file_name = self.simoutfile)
 
             #self.model_img = pf.open(self.simoutfile)[0].data
-            self.model_img_pix = self.pixelize( self.final_out_image.array )
+            self.sim_img_pix = self.pixelize( self.final_out_image.array )
 
-            self.simulated_images.append(self.model_img_pix[ self.trim_edges:-self.trim_edges
+            self.simulated_images.append(self.sim_img_pix[ self.trim_edges:-self.trim_edges
                                                     , self.trim_edges:-self.trim_edges
                                                 ])
+
 
     """
     Adjusting the guess for the location and flux of the supernova
