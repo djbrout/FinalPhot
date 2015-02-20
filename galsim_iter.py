@@ -293,15 +293,15 @@ class GalsimKernel:
             
             #This is it!
             self.mcmc()
-            
+            print counter
 
         t2 = time.time()
         print 'Total Time: ' + str( t2 - t1 )
         print 'Num Iterations: ' + str( counter )
         print 'Accepted Percentage: ' + str( self.accepted_history )
         np.savez(self.results_npz, pixel_history = self.pixel_history
-                                , simulated_stamp = self.simulated_image
-                                , data_stamp = self.real_stamp
+                                , simulated_stamps = self.simulated_images
+                                , data_stamps = self.real_data_stamps_trimmed
                                 )
         os.system( 'rm ' + self.simpixout )
         pf.writeto( self.simpixout, self.simulated_images[0] )
@@ -343,13 +343,13 @@ class GalsimKernel:
         return
 
     def update_pixel_history(self):
-        if self.thischisq < self.burn_in_chisq : #dont count burn-in period
-            self.pixel_history.append( self.kicked_model )
+        #if self.thischisq < self.burn_in_chisq : #dont count burn-in period
+        self.pixel_history.append( self.kicked_model )
         return
 
     def update_unaccepted_pixel_history(self):
-        if self.thischisq < self.burn_in_chisq :#dont count burn in period
-            self.pixel_history.append( self.model )
+        #if self.thischisq < self.burn_in_chisq :#dont count burn in period
+        self.pixel_history.append( self.model )
         return
 
     """                                                                                                                                    
@@ -365,14 +365,14 @@ class GalsimKernel:
 
         self.gal_model = galsim.InterpolatedImage( image = self.im, x_interpolant = 'linear')
 
-        # Combine galaxy model and supernova
-        self.total_gal = self.gal_model + self.sn
-
-        
         self.simulated_images = []
 
         # Convolve the model with the psf for each epoch and draw to stamp, then pixelize --> self.simulated_image
         for epoch in np.arange(len(self.DES_PSFEx_files)):
+
+            # Combine galaxy model and supernova
+            self.total_gal = self.gal_model + self.sns[epoch]
+                    
 
             # Convolve galaxy+sn model with psf
             self.final_big_fft = galsim.Convolve( [self.total_gal, self.psfs[epoch]], gsparams = self.big_fft_params )
