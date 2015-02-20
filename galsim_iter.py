@@ -53,7 +53,7 @@ class GalsimKernel:
                  , trim_edges = 1 # num pixels
                  , coarse_pixel_scale = 1.0 #arcsec
                  , results_tag = 'test' 
-                 , run_time = 1500
+                 , run_time = 180
                  , model_img_index = 0
                  ):
 
@@ -216,20 +216,18 @@ class GalsimKernel:
         [ self.weights_stamps_pixelated.append(self.pixelize( weights_stamp.array )) for weights_stamp in self.weights_stamps ]
         #self.model_img_pix = self.model_img
 
-        self.model = np.array( self.model_img_pix, dtype=float )
-        self.model = np.ascontiguousarray(np.flipud(np.fliplr(self.model.T)))
 
 
         # TRIMMING Boundaries
         self.real_data_stamps_trimmed = []
-        [ self.real_data_stamps_trimmed.append( real_data_stamps_pixelated[ self.trim_edges:-self.trim_edges
+        [ self.real_data_stamps_trimmed.append( real_data_stamp_pixelated[ self.trim_edges:-self.trim_edges
                                                                         , self.trim_edges:-self.trim_edges
-                                                                     ].array ) for real_data_stamp_pixelated in self.real_data_stamps_pixelated ]
+                                                                     ] ) for real_data_stamp_pixelated in self.real_data_stamps_pixelated ]
 
         self.weights_stamps_trimmed = []
-        [ self.weights_stamps_trimmed.append(weights_stamps_pixelated[ self.trim_edges:-self.trim_edges
+        [ self.weights_stamps_trimmed.append(weights_stamp_pixelated[ self.trim_edges:-self.trim_edges
                                                                         , self.trim_edges:-self.trim_edges
-                                                                     ].array ) for weights_stamp_pixelated in self.weights_stamps_pixelated ]
+                                                                     ] ) for weights_stamp_pixelated in self.weights_stamps_pixelated ]
 
 
         self.real_data_stamps_ravel = []
@@ -241,13 +239,13 @@ class GalsimKernel:
         real_data_filename = 'test_data_out.fits'
         real_data_file_out = os.path.join( self.outdir, real_data_filename )
         os.system('rm '+real_data_file_out)
-        pf.writeto(real_data_file_out, self.real_data_stamps[0])
+        pf.writeto(real_data_file_out, self.real_data_stamps_trimmed[0])
         
-        real_data_filename_beforepix = 'test_data_out_before_pix.fits'
-        real_data_file_out_beforepix = os.path.join( self.outdir, real_data_filename_beforepix )
+        #real_data_filename_beforepix = 'test_data_out_before_pix.fits'
+        #real_data_file_out_beforepix = os.path.join( self.outdir, real_data_filename_beforepix )
 
-        os.system('rm '+real_data_file_out_beforepix )
-        pf.writeto(real_data_file_out_beforepix,self.real_data_stamps_tobepixelated[0])
+        #os.system('rm '+real_data_file_out_beforepix )
+        #pf.writeto(real_data_file_out_beforepix, self.real_data_stamps[0])
         
 
         #self.real_stamp = pf.open( real_data_file_out )[0].data
