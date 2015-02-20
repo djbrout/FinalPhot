@@ -31,6 +31,10 @@ Galsim also blurrs the edges of the stamp when convoliving with the psf so I'm f
 
 ![alt tag](https://raw.github.com/djbrout/FinalPhot/master/readme_files/pixelize2.png)
 
+MCMC Burn In Period:
+====================
+![alt tag](https://raw.github.com/djbrout/FinalPhot/master/readme_files/burn_in.png)
+
 
 Speed:
 ======
