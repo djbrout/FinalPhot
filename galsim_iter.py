@@ -56,6 +56,7 @@ class GalsimKernel:
                  , results_tag = 'test' 
                  , run_time = 180
                  , model_img_index = 0
+                 , background_mesh_pix_size = 256
                  ):
 
         if real_images is None:
@@ -532,6 +533,10 @@ class GalsimKernel:
         #P.show()
 
         return
+
+        def background_mesh( self ):
+            
+            return
 
 def read_query( file, image_dir, image_nums):
     query = rdcol.read( file, 1, 2, '\t')
