@@ -218,27 +218,35 @@ class GalsimKernel:
         self.model = np.ascontiguousarray(np.flipud(np.fliplr(self.model.T)))
 
 
+        # TRIMMING Boundaries
+        self.real_data_stamps_trimmed = []
+        [ self.real_data_stamps_trimmed.append( real_data_stamps_pixelated[ self.trim_edges:-self.trim_edges
+                                                                        , self.trim_edges:-self.trim_edges
+                                                                     ].array ) for real_data_stamp_pixelated in self.real_data_stamps_pixelated ]
+
+        self.weights_stamps_trimmed = []
+        [ self.weights_stamps_trimmed.append(weights_stamps_pixelated[ self.trim_edges:-self.trim_edges
+                                                                        , self.trim_edges:-self.trim_edges
+                                                                     ].array ) for weights_stamp_pixelated in self.weights_stamps_pixelated ]
+
+
         self.real_data_stamps_ravel = []
-        [ self.real_data_stamps_trimmed.append( real_data_stamp_pixelated[ self.trim_edges:-self.trim_edges
-                                                                        , self.trim_edges:-self.trim_edges
-                                                                     ].array.ravel() ) for real_data_stamp_pixelated in self.real_data_stamps_pixelated ]
-
+        [ self.real_data_stamps_ravel.append( real_data_stamp.ravel() ) for real_data_stamp in self.real_data_stamps_trimmed ]
         self.weights_stamps_ravel = []
-        [ self.weights_stamps_trimmed.append(weights_stamp_pixelated[ self.trim_edges:-self.trim_edges
-                                                                        , self.trim_edges:-self.trim_edges
-                                                                     ].array.ravel()) for weights_stamp_pixelated in self.weights_stamps_pixelated ]
+        [ self.weights_stamps_ravel.append( weights_stamp.ravel() ) for weights_stamp in self.weights_stamps_trimmed ]
 
-        '''real_data_filename = 'test_data_out.fits'
+
+        real_data_filename = 'test_data_out.fits'
         real_data_file_out = os.path.join( self.outdir, real_data_filename )
         os.system('rm '+real_data_file_out)
-        pf.writeto(real_data_file_out, self.real_data_stamp_trimmed)
+        pf.writeto(real_data_file_out, self.real_data_stamps[0])
         
         real_data_filename_beforepix = 'test_data_out_before_pix.fits'
         real_data_file_out_beforepix = os.path.join( self.outdir, real_data_filename_beforepix )
 
         os.system('rm '+real_data_file_out_beforepix )
-        pf.writeto(real_data_file_out_beforepix,self.real_data_stamp_tobepixelated)
-        '''
+        pf.writeto(real_data_file_out_beforepix,self.real_data_stamps_tobepixelated[0])
+        
 
         #self.real_stamp = pf.open( real_data_file_out )[0].data
         #self.real_stamp_array = self.real_stamp.ravel()
