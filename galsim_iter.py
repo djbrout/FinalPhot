@@ -150,6 +150,12 @@ class GalsimKernel:
         self.weights = []
         [ self.weights.append(weights_fit[0].data) for weights_fit in self.weights_fits ]
 
+
+
+        #FIND BACKGROUNDS
+        self.background_mesh( self.real_imgs )
+
+
         ##SET THE MODEL IMAGE TO ONE OF THE REAL IMAGES (SET BY INPUT INDEX)
         #self.model_img = self.real_imgs[model_img_index]
 
@@ -534,8 +540,16 @@ class GalsimKernel:
 
         return
 
-        def background_mesh( self ):
+        # Takes in full image, creates mesh, calculates mean and 1-sided stdev in each mesh pixel
+        def background_mesh( self, images, mesh_pixel_size = 256 ):
             
+            image_sizes = []
+
+            [ image_sizes.append(len(im)) for im in images]
+
+            print image_sizes
+            raw_input()
+
             return
 
 def read_query( file, image_dir, image_nums):
