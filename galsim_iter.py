@@ -21,6 +21,7 @@ import os
 import time
 import rdcol
 from scipy.ndimage.interpolation import zoom
+from scipy.ndimage.filters import median_filter
 
 # def meanclip(indata, clipsig=3.0, maxiter=5, converge_num=0.02, verbose=0):
 import sigma_clip
@@ -61,6 +62,7 @@ class GalsimKernel:
                  , run_time = 180
                  , model_img_index = 0
                  , background_mesh_pix_size = 256
+                 , background_mesh_median_filter_size = 3 # A value of one means no filter is applied
                  ):
 
         if real_images is None:
@@ -102,13 +104,16 @@ class GalsimKernel:
         self.exposure_nums = np.array(exposure_nums)
         self.ccd_nums = np.array(ccd_nums)
         self.which_filters = np.array(which_filters,dtype='string')
+        self.background_mesh_median_filter_size = background_mesh_median_filter_size
+
 
         self.SN_fluxes = np.zeros(len(real_images))#initialize to zero
         self.SN_RA_guesses = np.zeros(len(real_images))#initialize to zero
         self.SN_DEC_guesses = np.zeros(len(real_images))#initialize to zero
 
-        self.galpos_ras = np.array( galpos_ras,dtype=float)
-        self.galpos_decs = np.array( galpos_decs,dtype=float )
+        self.galpos_ras = np.array( galpos_ras, dtype = float)
+        self.galpos_decs = np.array( galpos_decs, dtype = float )
+        self.galpos_backgrounds = np.zeros( len( galpos_ras ) )
         self.stamp_RA = float( stamp_RA )
         self.stamp_DEC = float( stamp_DEC )
 
@@ -157,7 +162,7 @@ class GalsimKernel:
 
 
         #FIND BACKGROUNDS
-        self.background_mesh( self.real_imgs )
+        self.background_mesh()
 
 
         ##SET THE MODEL IMAGE TO ONE OF THE REAL IMAGES (SET BY INPUT INDEX)
@@ -544,6 +549,7 @@ class GalsimKernel:
 
         return
 
+
     # Takes in full image, creates mesh, and following the sextractor.pdf
     # "The background estimator is a combination of sigma clipping and mode estimation,
     # Briefly, the local background histogram is clipped iteratively until convergence 
@@ -552,13 +558,19 @@ class GalsimKernel:
     # histogram as a value for the background; otherwise we estimate the mode with:
     # Mode = 2.5 x Median - 1.5 x Mean"
     # MESH PIXEL SIZE MUST DIVIDE INTO IMAGE SIZE CLEANLY!
-    def background_mesh( self, images, mesh_pixel_size = 256 ): 
+    def background_mesh( self, mesh_pixel_size = 256 ): 
         self.image_meshes = []
+        self.image_meshes_meanRAandDECs = []
 
-        for im in images:
+        index = -1
+        for im in self.real_imgs:
+            index += 1
+            this_image_SN_RA = self.galpos_ras[ index ]
+            this_image_SN_DEC = self.galpos_decs[ index ]
             image_size = np.shape(im)
             imshape = (image_size[0]/mesh_pixel_size - 1, image_size[1]/mesh_pixel_size - 1)
             image_mesh = np.zeros(imshape)
+            mean_RAandDecs = np.zeros(imshape)
             x_step_int = -1
             for x_step in np.arange( mesh_pixel_size, image_size[0], mesh_pixel_size ):
                 x_step_int += 1
@@ -573,9 +585,17 @@ class GalsimKernel:
                         background = np.mean( clipped_local_pixel_array )
                     else:
                         background = 2.5 * np.median( clipped_local_pixel_array ) - 1.5 * np.mean( clipped_local_pixel_array )
-                    image_mesh[x_step_int,y_step_int] = background                            
-            print image_mesh
-            self.image_meshes.append(image_mesh)
+                    image_mesh[x_step_int,y_step_int] = background
+            filtered_image_mesh = median_filter( image_mesh, size = self.background_mesh_median_filter_size )
+            self.image_meshes.append(filtered_image_mesh)
+            for x_step in np.arange( mesh_pixel_size, image_size[0], mesh_pixel_size ):
+                for y_step in np.arange( mesh_pixel_size, image_size[1], mesh_pixel_size ):
+                    if this_image_SN_RA > x_step:
+                        if this_image_SN_RA < x_step + mesh_pixel_size:
+                            if this_image_SN_DEC > y_step:
+                                if this_image_SN_DEC < y_step + mesh_pixel_size:
+                                    self.galpos_backgrounds[ index ] = background
+            print self.galpos_backgrounds
             raw_input()
         return 
 
