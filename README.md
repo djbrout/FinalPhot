@@ -39,7 +39,7 @@ At the moment, the code takes 0.09 seconds to run. 0.08 of that time is taken by
 TO DO LIST:
 ===========
 
-* Split model to galaxy pixel values and a constant sky offset.
+* Zero points using mcmc on known stars
 
 * Calculate backgrounds using sextractor methodology (image mesh with sigma cuts and mode calc)
 
