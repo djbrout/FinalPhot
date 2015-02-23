@@ -65,7 +65,7 @@ def meanclip(indata, clipsig=3.0, maxiter=5, converge_num=0.02, verbose=0):
    # End of while loop
 
    mean  = numpy.mean( skpix )
-   sigma = robust_sigma( skpix )
+   sigma = numpy.std( skpix )
 
    if verbose:
        prf = 'MEANCLIP:'

@@ -305,7 +305,7 @@ class GalsimKernel:
             
             #This is it!
             self.mcmc()
-            print counter
+            #print counter
 
         t2 = time.time()
         print 'Total Time: ' + str( t2 - t1 )
@@ -544,44 +544,40 @@ class GalsimKernel:
 
         return
 
-        # Takes in full image, creates mesh, and following the sextractor.pdf
-        # "The background estimator is a combination of κ.σ clipping and mode estimation,
-        # similar to the one employed in Stetson’s DAOPHOT program (see e.g. Da Costa 1992). 
-        # Briefly, the local background histogram is clipped iteratively until convergence 
-        # at ±3σ around its median; if σ is changed by less than 20% during that process, 
-        # we consider that the field is not crowded and we simply take the mean of the clipped 
-        # histogram as a value for the background; otherwise we estimate the mode with:
-        # Mode = 2.5 × Median − 1.5 × Mean"
-        def background_mesh( self, images, mesh_pixel_size = 256 ):
-            
-            image_meshes = []
+    # Takes in full image, creates mesh, and following the sextractor.pdf
+    # "The background estimator is a combination of sigma clipping and mode estimation,
+    # Briefly, the local background histogram is clipped iteratively until convergence 
+    # at 3sigma around its median; if sigma is changed by less than 20% during that process, 
+    # we consider that the field is not crowded and we simply take the mean of the clipped 
+    # histogram as a value for the background; otherwise we estimate the mode with:
+    # Mode = 2.5 x Median - 1.5 x Mean"
+    # MESH PIXEL SIZE MUST DIVIDE INTO IMAGE SIZE CLEANLY!
+    def background_mesh( self, images, mesh_pixel_size = 256 ): 
+        self.image_meshes = []
 
-            for im in images:
-                image_size = np.shape(im)
-                image_meshes.append(np.array(image_size[0]%mesh_pixel_size,image_size[1]%mesh_pixel_size))
-
-                x_step_int = -1
+        for im in images:
+            image_size = np.shape(im)
+            imshape = (image_size[0]/mesh_pixel_size - 1, image_size[1]/mesh_pixel_size - 1)
+            image_mesh = np.zeros(imshape)
+            x_step_int = -1
+            for x_step in np.arange( mesh_pixel_size, image_size[0], mesh_pixel_size ):
+                x_step_int += 1
                 y_step_int = -1
-                for x_step in np.arange( mesh_pixel_size, image_size[0], mesh_pixel_size ):
-                    x_step_int += 1
-                    for y_step in np.arange( mesh_pixel_size, image_size[1], mesh_pixel_size ):
-                        y_step_int += 1
-                        try: #trying becuase when you get to the end if image width is not an exact multiple of the stepsize
-                            local_pixel_array = im[ x_step - mesh_pixel_size : x_step, y_step - mesh_pixel_size : y_step ].ravel()
-                            start_stdev = np.std( local_pixel_array )
-                            final_mean, final_stdev, clipped_local_pixel_array = sigma_clip.meanclip( local_pixel_array, clipsig = 3, maxiter = 8 )
-                            if ( start_stdev - final_stdev ) / start_stdev < .2 :
-                                background = np.mean( clipped_local_pixel_array )
-                            else:
-                                background = 2.5 * np.median( clipped_local_pixel_array ) - 1.5 * np.mean( clipped_local_pixel_array )
-                        
-                            #NEED TO FIGURE OUT HOW TO STORE BACKGROUNDS
-                        except:
-                            print 'Error: xstep = '+str(x_step)+', ystep = '+str(y_step)
-
-            return
-
-        def sigma_cut(self,array):
+                for y_step in np.arange( mesh_pixel_size, image_size[1], mesh_pixel_size ):
+                    y_step_int += 1
+                    #try: #trying becuase when you get to the end if image width is not an exact multiple of the stepsize
+                    local_pixel_array = im[ x_step - mesh_pixel_size : x_step, y_step - mesh_pixel_size : y_step ].ravel()
+                    start_stdev = np.std( local_pixel_array )
+                    final_mean, final_stdev, clipped_local_pixel_array = sigma_clip.meanclip( local_pixel_array, clipsig = 3, maxiter = 8 )
+                    if ( start_stdev - final_stdev ) / start_stdev < .2 :
+                        background = np.mean( clipped_local_pixel_array )
+                    else:
+                        background = 2.5 * np.median( clipped_local_pixel_array ) - 1.5 * np.mean( clipped_local_pixel_array )
+                    image_mesh[x_step_int,y_step_int] = background                            
+            print image_mesh
+            self.image_meshes.append(image_mesh)
+            raw_input()
+        return 
 
 
 def read_query( file, image_dir, image_nums):
