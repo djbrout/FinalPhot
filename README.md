@@ -8,7 +8,7 @@ by Dillon Brout: dbrout@physics.upenn.edu.
 Update:
 =========
 
-Currently I'm looking at the first exposure (247897) of galaxy DES13E1sae found here http://dessne.cosmology.illinois.edu/SNWG/web/display/examineCand.php?Name=DES13E1sae
+Shown is the first exposure (247897) of galaxy DES13E1sae found here http://dessne.cosmology.illinois.edu/SNWG/web/display/examineCand.php?Name=DES13E1sae
 
 The .fits of this exposure is located here: 
 
@@ -24,12 +24,6 @@ pixelated and trimmed
 ![alt tag](https://raw.github.com/djbrout/FinalPhot/master/readme_files/sim_and_pix_working.png)
 
 
-Pixelating and Trimming Edges:
-==============================
-Pixelating has been implemented using bilinear interpolation. Currently losing RA and DEC values for the pixels so I might want to keep track of that.
-Galsim also blurrs the edges of the stamp when convoliving with the psf so I'm further trimming the stamps to avoid that affecting the correlation.
-
-![alt tag](https://raw.github.com/djbrout/FinalPhot/master/readme_files/pixelize2.png)
 
 MCMC Burn In Period:
 ====================
