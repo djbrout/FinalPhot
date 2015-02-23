@@ -44,23 +44,11 @@ At the moment, the code takes 0.09 seconds to run. 0.08 of that time is taken by
 
 TO DO LIST:
 ===========
-* Make MCMC modular
-
-* Get pixel histograms working
 
 * Split model to galaxy pixel values and a constant sky offset.
 
-* Accept multiple epochs and keep galaxy model constant but allow constant background offset to float
+* Calculate backgrounds using sextractor methodology (image mesh with sigma cuts and mode calc)
 
 * Add Flux(Supernova(ra,dec))_epoch to model
 
-* Dont lose RA and DEC when pixelating. Do everything in Galsim!
-
-* figure out how to adjust without drawing and interpolating
-
-* Implement adjust_model()
-
-* Allow GalsimKernel to accept arrays of galpos_ra's and decs
-
-* How do I know which images are pre-post SN?
 
