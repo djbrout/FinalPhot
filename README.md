@@ -25,9 +25,10 @@ pixelated and trimmed
 
 
 
-MCMC Burn In Period:
+
+MCMC Results
 ====================
-![alt tag](https://raw.github.com/djbrout/FinalPhot/master/readme_files/burn_in.png)
+![alt tag](https://raw.github.com/djbrout/FinalPhot/master/readme_files/bkgrnd.png)
 
 
 Speed:
