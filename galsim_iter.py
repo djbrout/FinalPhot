@@ -109,7 +109,7 @@ class GalsimKernel:
         self.write_to_file_img_num = write_to_file_img_num
 
         #self.SN_fluxes = np.zeros(len(real_images))#initialize to zero
-        self.SN_fluxes = [0,1000]
+        self.SN_fluxes = [0,1000,1000]
         self.SN_RA_guesses = np.zeros(len(real_images))#initialize to zero
         self.SN_DEC_guesses = np.zeros(len(real_images))#initialize to zero
 
@@ -296,33 +296,37 @@ class GalsimKernel:
         self.accepted_history = 0.5
         self.accepted_int = 0
         print 'Done Innitting'
+        raw_input()
 
     """
     This will manage the iterating process
     """
     def run( self ):
         self.thischisq = 9999
-        t1 = time.time()
-        counter = 0
-        t2 = time.time()
+        self.t1 = time.time()
+        self.counter = 0
+        self.t2 = time.time()
 
-        while t2-t1 < self.run_time:
-            t2 = time.time()
-            counter += 1
+        while self.t2-self.t1 < self.run_time:
+            self.t2 = time.time()
+            self.counter += 1
             self.accepted_int += 1
             
             #This is it!
             self.mcmc()
             #print counter
 
-        t2 = time.time()
-        print 'Total Time: ' + str( t2 - t1 )
-        print 'Num Iterations: ' + str( counter )
+        self.summarize()
+
+    def summarize( self ):
+        self.t2 = time.time()
+        print 'Total Time: ' + str( self.t2 - self.t1 )
+        print 'Num Iterations: ' + str( self.counter )
         print 'Accepted Percentage: ' + str( self.accepted_history )
         np.savez(self.results_npz, pixel_history = self.pixel_history
                                 , simulated_stamps = self.simulated_images
                                 , data_stamps = self.real_data_stamps_trimmed
-                                #, sn_flux_history  = self.sn_flux_history[0]
+                                , sn_flux_history  = self.sn_flux_history
                                 )
         os.system( 'rm ' + self.simpixout )
         pf.writeto( self.simpixout, self.simulated_images[self.write_to_file_img_num] )
@@ -331,7 +335,6 @@ class GalsimKernel:
         pf.writeto( self.model_file_out, np.ascontiguousarray(np.flipud(np.fliplr(self.model.T))) )
 
     def mcmc(self):
-
         self.adjust_model() 
         self.adjust_sn()
             
@@ -377,7 +380,7 @@ class GalsimKernel:
     def update_unaccepted_history(self):
         #if self.thischisq < self.burn_in_chisq :#dont count burn in period
         self.pixel_history.append( self.model )
-        self.sn_flux_history.append( self.sns )
+        self.sn_flux_history.append( self.SN_fluxes )
         return
 
     """                                                                                                                                    
@@ -432,16 +435,7 @@ class GalsimKernel:
             self.SN_fluxes[epoch] += np.random.normal(scale = stdev )
             #self.SN_RA_guess += ra_adj
             #self.SN_DEC_guess += dec_adj
-            # Shift SN relative to galaxy center                                                                                         
-            #NEED TO FIGURE OUT PROPER WAY TO ADJUST (DOES THIS ALWAYS SHIFT FROM CENTER?)
-            #NEED TO DOUBLE CHECK RA VS DEC
             self.kicked_sns[epoch] = galsim.Gaussian( sigma = 1.e-8, flux = self.SN_fluxes[epoch] )
-
-        #if (ra_adj == 0.0) & (dec_adj == 0.0):
-        #    pass
-        #else:
-        #    self.sn = self.sn.shift( galsim.PositionD( self.SN_RA_guess, self.SN_DEC_guess )) # arcsec  
-        
 
     """
     Adjusting the galaxy model pixel values. Completely empirical!
@@ -713,7 +707,7 @@ if __name__=='__main__':
 
     #image_nums = [0,1,5,9,13,17]
 
-    image_nums = [0,1]
+    image_nums = [0,1,5]
 
     real_images, weights_files, psf_files, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
 
@@ -732,8 +726,8 @@ if __name__=='__main__':
                         , galpos_ras = galpos_ras
                         , galpos_decs = galpos_decs
                         , results_tag = 'pix_1arcsec'
-                        , run_time = 100
-                        , write_to_file_img_num = 1
+                        , run_time = 600
+                        , write_to_file_img_num = 2
                         )
     
     test.run()
