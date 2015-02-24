@@ -327,7 +327,7 @@ class GalsimKernel:
         pf.writeto( self.simpixout, self.simulated_images[self.write_to_file_img_num] )
 
         os.system( 'rm ' + self.model_file_out )
-        pf.writeto( self.model_file_out, self.model )
+        pf.writeto( self.model_file_out, np.ascontiguousarray(np.flipud(np.fliplr(self.model.T))) )
 
     def mcmc(self):
 
@@ -732,6 +732,7 @@ if __name__=='__main__':
                         , galpos_decs = galpos_decs
                         , results_tag = 'pix_1arcsec'
                         , run_time = 120
+                        , write_to_file_img_num = 1
                         )
     
     test.run()
