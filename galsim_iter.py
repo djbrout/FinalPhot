@@ -181,7 +181,7 @@ class GalsimKernel:
         [ self.sns.append(galsim.Gaussian( sigma = 1.e-8, flux = SN_flux )) for SN_flux in self.SN_fluxes]
 
         # Shift SNs relative to galaxy center
-        [ self.sns[i].shift(galsim.PositionD( self.SN_RA_guesses[i], self.SN_DEC_guesses[i] )) for i in np.arange(len(self.SN_RA_guesses))]
+        [ self.sns[i].shift(galsim.PositionD( self.galpos_ras[i][0], self.galpos_decs[i][0] )) for i in np.arange(len(self.galpos_ras))]
         
         #get wcs information from real data file (this doesnt change as model changes)                                                
         self.wcss = []
@@ -198,7 +198,7 @@ class GalsimKernel:
 
         # We just care about psf locally at the image pos
         self.psfs = []
-        [ self.psfs.append(self.psf_models[i].getPSF( self.image_poss[i] )) for i in np.arange(len(self.image_poss))]
+        [ self.psfs.append(self.psf_models[i].getPSF( self.image_pos )) for i in np.arange(len(self.psf_models))]
 
         # DEMO 7. Gets rid of FFT Runtime Error
         # http://stackoverflow.com/questions/24966419/fft-runtime-error-in-running-galsim?newreg=fb140d2381ff47cda008d3ade724ed59
@@ -276,10 +276,11 @@ class GalsimKernel:
 
         self.sim_filename = 'test_sim_out.fits'
         self.sim_full_filename = 'test_sim_pix_out.fits'
+        self.model_file = 'test_model_out.fits'
         
         self.simoutfile = os.path.join(self.outdir,self.sim_filename)
         self.simpixout = os.path.join(self.outdir,self.sim_full_filename)
-        
+        self.model_file_out = os.path.join(self.outdir,self.model_file)
 
         '''
         Set iteration parameters
@@ -290,6 +291,7 @@ class GalsimKernel:
         [ self.model_pixels.append([]) for i in np.nditer(self.real_data_stamps_ravel[model_img_index])]
 
         self.pixel_history = []
+        self.sn_flux_history = []
         self.accepted_history = 0.5
         self.accepted_int = 0
         print 'Done Innitting'
@@ -319,14 +321,18 @@ class GalsimKernel:
         np.savez(self.results_npz, pixel_history = self.pixel_history
                                 , simulated_stamps = self.simulated_images
                                 , data_stamps = self.real_data_stamps_trimmed
+                                , sn_flux_history  = self.sn_flux_history
                                 )
         os.system( 'rm ' + self.simpixout )
         pf.writeto( self.simpixout, self.simulated_images[self.write_to_file_img_num] )
 
+        os.system( 'rm ' + self.model_file_out )
+        pf.writeto( self.model_file_out, self.model )
 
     def mcmc(self):
 
         self.adjust_model() 
+        self.adjust_sn()
             
         self.kernel()
         
@@ -339,11 +345,11 @@ class GalsimKernel:
             #print 'accepted'
             self.accepted_history = ( self.accepted_history * self.accepted_int + 1.0 ) / ( self.accepted_int + 1 )
             self.copy_adjusted_image_to_model()
-            self.update_pixel_history()
+            self.update_history()
             self.chisq.append(self.thischisq)
         else:
             self.accepted_history = ( self.accepted_history * self.accepted_int ) / ( self.accepted_int + 1 )
-            self.update_unaccepted_pixel_history()
+            self.update_unaccepted_history()
 
     def accept(self):
         alpha = np.exp( self.chisq[-1] - self.thischisq ) / 2.0
@@ -357,16 +363,20 @@ class GalsimKernel:
 
     def copy_adjusted_image_to_model(self):
         self.model = self.kicked_model
+        self.sns = self.kicked_sns
         return
 
-    def update_pixel_history(self):
+    def update_history(self):
         #if self.thischisq < self.burn_in_chisq : #dont count burn-in period
         self.pixel_history.append( self.kicked_model )
+        self.sn_flux_history.append( self.kicked_sns )
         return
 
-    def update_unaccepted_pixel_history(self):
+
+    def update_unaccepted_history(self):
         #if self.thischisq < self.burn_in_chisq :#dont count burn in period
         self.pixel_history.append( self.model )
+        self.sn_flux_history.append( self.sns )
         return
 
     """                                                                                                                                    
@@ -415,23 +425,21 @@ class GalsimKernel:
     """
     Adjusting the guess for the location and flux of the supernova
     """
-    def adjust_sn( self, flux_adj = 0.0, ra_adj = 0.0, dec_adj = 0.0 ):        
-        self.SN_flux += flux_adj
-        self.SN_RA_guess += ra_adj
-        self.SN_DEC_guess += dec_adj
-        # Shift SN relative to galaxy center                                                                                         
-        #NEED TO FIGURE OUT PROPER WAY TO ADJUST (DOES THIS ALWAYS SHIFT FROM CENTER?)
-        #NEED TO DOUBLE CHECK RA VS DEC
-        if flux_adj == 0.0:
-            pass
-        else:
-            self.sn = galsim.Gaussian( sigma = 1.e-8, flux = self.SN_flux )
-        t2 = time.time()
+    def adjust_sn( self, stdev = 10):        
+        self.kicked_sns = self.sns
+        for epoch in np.arange(len(self.sns)):
+            self.SN_fluxes[epoch] += np.random.normal(scale = stdev )
+            #self.SN_RA_guess += ra_adj
+            #self.SN_DEC_guess += dec_adj
+            # Shift SN relative to galaxy center                                                                                         
+            #NEED TO FIGURE OUT PROPER WAY TO ADJUST (DOES THIS ALWAYS SHIFT FROM CENTER?)
+            #NEED TO DOUBLE CHECK RA VS DEC
+            self.kicked_sns[epoch] = galsim.Gaussian( sigma = 1.e-8, flux = self.SN_fluxes[epoch] )
 
-        if (ra_adj == 0.0) & (dec_adj == 0.0):
-            pass
-        else:
-            self.sn = self.sn.shift( galsim.PositionD( self.SN_RA_guess, self.SN_DEC_guess )) # arcsec  
+        #if (ra_adj == 0.0) & (dec_adj == 0.0):
+        #    pass
+        #else:
+        #    self.sn = self.sn.shift( galsim.PositionD( self.SN_RA_guess, self.SN_DEC_guess )) # arcsec  
         
 
     """
@@ -723,9 +731,9 @@ if __name__=='__main__':
                         , galpos_ras = galpos_ras
                         , galpos_decs = galpos_decs
                         , results_tag = 'pix_1arcsec'
-                        , run_time = 500
+                        , run_time = 300
                         )
     
-    #test.run()
-    test.plot_pixel_histograms()
+    test.run()
+    #test.plot_pixel_histograms()
 
