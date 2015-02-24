@@ -25,26 +25,3 @@ pixelated and trimmed
 
 
 
-
-MCMC Results
-====================
-![alt tag](https://raw.github.com/djbrout/FinalPhot/master/readme_files/bkgrnd.png)
-
-
-Speed:
-======
-
-At the moment, the code takes 0.01 seconds to run through one epoch.
-
-
-TO DO LIST:
-===========
-* Currently fitting for all images within the same filter
-
-* Zero points using mcmc on known stars
-
-* Calculate backgrounds using sextractor methodology (image mesh with sigma cuts and mode calc)
-
-* Add Flux(Supernova(ra,dec))_epoch to model
-
-
