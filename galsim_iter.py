@@ -321,7 +321,7 @@ class GalsimKernel:
         np.savez(self.results_npz, pixel_history = self.pixel_history
                                 , simulated_stamps = self.simulated_images
                                 , data_stamps = self.real_data_stamps_trimmed
-                                , sn_flux_history  = self.sn_flux_history
+                                #, sn_flux_history  = self.sn_flux_history[0]
                                 )
         os.system( 'rm ' + self.simpixout )
         pf.writeto( self.simpixout, self.simulated_images[self.write_to_file_img_num] )
@@ -425,7 +425,7 @@ class GalsimKernel:
     """
     Adjusting the guess for the location and flux of the supernova
     """
-    def adjust_sn( self, stdev = 10):        
+    def adjust_sn( self, stdev = 2):        
         self.kicked_sns = self.sns
         for epoch in np.arange(len(self.sns)):
             self.SN_fluxes[epoch] += np.random.normal(scale = stdev )
@@ -712,7 +712,7 @@ if __name__=='__main__':
 
     #image_nums = [0,1,5,9,13,17]
 
-    image_nums = [1]
+    image_nums = [0,1]
 
     real_images, weights_files, psf_files, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
 
@@ -731,7 +731,7 @@ if __name__=='__main__':
                         , galpos_ras = galpos_ras
                         , galpos_decs = galpos_decs
                         , results_tag = 'pix_1arcsec'
-                        , run_time = 300
+                        , run_time = 120
                         )
     
     test.run()
