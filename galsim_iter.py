@@ -108,7 +108,8 @@ class GalsimKernel:
         self.background_mesh_median_filter_size = background_mesh_median_filter_size
         self.write_to_file_img_num = write_to_file_img_num
 
-        self.SN_fluxes = np.zeros(len(real_images))#initialize to zero
+        #self.SN_fluxes = np.zeros(len(real_images))#initialize to zero
+        self.SN_fluxes = [500,500]
         self.SN_RA_guesses = np.zeros(len(real_images))#initialize to zero
         self.SN_DEC_guesses = np.zeros(len(real_images))#initialize to zero
 
@@ -428,7 +429,7 @@ class GalsimKernel:
     def adjust_sn( self, stdev = 2):        
         self.kicked_sns = self.sns
         for epoch in np.arange(len(self.sns)):
-            self.SN_fluxes[epoch] += np.random.normal(scale = stdev )
+            #self.SN_fluxes[epoch] += np.random.normal(scale = stdev )
             #self.SN_RA_guess += ra_adj
             #self.SN_DEC_guess += dec_adj
             # Shift SN relative to galaxy center                                                                                         
