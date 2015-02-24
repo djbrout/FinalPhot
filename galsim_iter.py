@@ -707,7 +707,7 @@ if __name__=='__main__':
 
     #image_nums = [0,1,5,9,13,17]
 
-    image_nums = [0,1,5]
+    image_nums = [0,1,9]
 
     real_images, weights_files, psf_files, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
 
