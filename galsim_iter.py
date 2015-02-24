@@ -64,6 +64,7 @@ class GalsimKernel:
                  , background_mesh_pix_size = 256
                  , background_mesh_median_filter_size = 3 # A value of one means no filter is applied
                  , write_to_file_img_num = 0
+                 , SN_flux_guesses = None
                  ):
 
         if real_images is None:
@@ -81,7 +82,9 @@ class GalsimKernel:
         if psf_files is None:
             raise AttributeError('Must provide psf_files in __init__')
         if weights_files is None:
-            raise AttributeError('Must provide weights_files in __init__')            
+            raise AttributeError('Must provide weights_files in __init__')     
+        if SN_flux_guesses is None:
+            raise AttributeError('Must provide SN_flux_guesses in __init__') 
 
         print exposure_nums
         print len(exposure_nums)
@@ -109,7 +112,7 @@ class GalsimKernel:
         self.write_to_file_img_num = write_to_file_img_num
 
         #self.SN_fluxes = np.zeros(len(real_images))#initialize to zero
-        self.SN_fluxes = [0,1000,1000,1000]
+        self.SN_fluxes = SN_flux_guesses
         self.SN_RA_guesses = np.zeros(len(real_images))#initialize to zero
         self.SN_DEC_guesses = np.zeros(len(real_images))#initialize to zero
 
@@ -296,7 +299,6 @@ class GalsimKernel:
         self.accepted_history = 0.5
         self.accepted_int = 0
         print 'Done Innitting'
-        raw_input()
 
     """
     This will manage the iterating process
@@ -316,9 +318,9 @@ class GalsimKernel:
             self.mcmc()
             #print counter
 
-        self.summarize()
+        self.summarize_run()
 
-    def summarize( self ):
+    def summarize_run( self ):
         self.t2 = time.time()
         print 'Total Time: ' + str( self.t2 - self.t1 )
         print 'Num Iterations: ' + str( self.counter )
@@ -708,6 +710,7 @@ if __name__=='__main__':
     #image_nums = [0,1,5,9,13,17]
 
     image_nums = [0,1,9,13]
+    SN_counts_guesses = [0,1000,1000,1000]
 
     real_images, weights_files, psf_files, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
 
@@ -728,8 +731,12 @@ if __name__=='__main__':
                         , results_tag = 'pix_1arcsec'
                         , run_time = 600
                         , write_to_file_img_num = 3
+                        , SN_counts_guesses = SN_counts_guesses
                         )
     
     test.run()
     #test.plot_pixel_histograms()
+    #Check backgrounds
+    #write all data and sim files to fits
+    #plot flux history
 
