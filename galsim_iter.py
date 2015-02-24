@@ -114,6 +114,8 @@ class GalsimKernel:
 
         self.galpos_ras = np.array( galpos_ras, dtype = float)
         self.galpos_decs = np.array( galpos_decs, dtype = float )
+        self.stamp_ra_center = np.mean(self.galpos_ras)
+        self.stamp_dec_center = np.mean(self.galpos_decs)
         self.galpos_backgrounds = np.zeros( len( galpos_ras ) )
         self.stamp_RA = float( stamp_RA )
         self.stamp_DEC = float( stamp_DEC )
@@ -190,8 +192,9 @@ class GalsimKernel:
         [ self.psf_models.append(galsim.des.DES_PSFEx( self.DES_PSFEx_files[i], wcs=self.wcss[i])) for i in np.arange(len(self.wcss)) ]
 
         # position of galaxy in original image. (pixels) (doesnt iterate) NEED TO FIGURE OUT RA VS DEC
-        self.image_poss = []
-        [ self.image_poss.append(galsim.PositionD( self.galpos_ras[i][0], self.galpos_decs[i][0] )) for i in np.arange(len(self.galpos_ras)) ]
+        #self.image_poss = []
+        #[ self.image_poss.append(galsim.PositionD( self.galpos_ras[i][0], self.galpos_decs[i][0] )) for i in np.arange(len(self.galpos_ras)) ]
+        self.image_pos = galsim.PositionD( self.stamp_ra_center, self.stamp_dec_center )
 
         # We just care about psf locally at the image pos
         self.psfs = []
@@ -210,17 +213,17 @@ class GalsimKernel:
 
         # Chop out real data stamp for each epoch
         self.real_data_stamps = []
-        [ self.real_data_stamps.append(full_real_data_images[i][ galsim.BoundsI( int( self.galpos_ras[i]-self.stamp_RA ) 
-                                                                    , int( self.galpos_ras[i]+self.stamp_RA )
-                                                                    , int( self.galpos_decs[i]-self.stamp_DEC )
-                                                                    , int( self.galpos_decs[i]+self.stamp_DEC )
+        [ self.real_data_stamps.append(full_real_data_images[i][ galsim.BoundsI( int( self.stamp_ra_center-self.stamp_RA ) 
+                                                                    , int( self.stamp_ra_center+self.stamp_RA )
+                                                                    , int( self.stamp_dec_center-self.stamp_DEC )
+                                                                    , int( self.stamp_dec_center+self.stamp_DEC )
                                                                     ) ]) for i in np.arange(len(full_real_data_images)) ]
         # Chop out an uncertainty stamp for each epoch
         self.weights_stamps = []
-        [ self.weights_stamps.append(full_weights[i][ galsim.BoundsI( int( self.galpos_ras[i]-self.stamp_RA ) 
-                                                                    , int( self.galpos_ras[i]+self.stamp_RA )
-                                                                    , int( self.galpos_decs[i]-self.stamp_DEC )
-                                                                    , int( self.galpos_decs[i]+self.stamp_DEC )
+        [ self.weights_stamps.append(full_weights[i][ galsim.BoundsI( int( self.stamp_ra_center-self.stamp_RA ) 
+                                                                    , int( self.stamp_ra_center+self.stamp_RA )
+                                                                    , int( self.stamp_dec_center-self.stamp_DEC )
+                                                                    , int( self.stamp_dec_center+self.stamp_DEC )
                                                                     ) ]) for i in np.arange(len(full_weights)) ]
 
 
@@ -393,11 +396,11 @@ class GalsimKernel:
 
             # create a blank stamp to be used by drawImage
             self.sim_stamp = galsim.ImageF( self.stamp_RA*2 + 1, self.stamp_DEC*2 + 1, 
-                                        wcs = self.wcss[epoch].local(image_pos=self.image_poss[epoch]) )
+                                        wcs = self.wcss[epoch].local(image_pos=self.image_pos) )
 
 
 
-            self.final_out_image = self.final_big_fft.drawImage( image = self.sim_stamp, wcs = self.wcss[epoch].local(image_pos=self.image_poss[epoch]) )
+            self.final_out_image = self.final_big_fft.drawImage( image = self.sim_stamp, wcs = self.wcss[epoch].local(image_pos=self.image_pos) )
         
             #self.final_out_image.write(file_name = self.simoutfile)
 
