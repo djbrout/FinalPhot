@@ -524,20 +524,20 @@ class GalsimKernel:
         out = os.path.join(self.outdir,'pixel_history.png')
         P.savefig(out)
         P.figure(2)
-        n, bins, patches = P.hist(pixel1_vec_np[5000:], 100, histtype='stepfilled',alpha=.3)
-        P.text(150, 800, 'Hist Mean: '+str(np.mean(pixel1_vec_np[5000:])) + '\n' +
+        n, bins, patches = P.hist(pixel1_vec_np[20000:], 100, histtype='stepfilled',alpha=.3)
+        P.text(150, 800, 'Hist Mean: '+str(np.mean(pixel1_vec_np[20000:])) + '\n' +
                         'Pix Real Value: ' + str(pixel1_val) + '\n' +
-                        'Hist Stdev: '+str(np.std(pixel1_vec_np[5000:])) + '\n' + 
+                        'Hist Stdev: '+str(np.std(pixel1_vec_np[20000:])) + '\n' + 
                         'Pixel sigma: '+str((1/pixel1_weight)**.5),
                         style='italic',
                         bbox={'facecolor':'red', 'alpha':0.5, 'pad':10})
         out = os.path.join(self.outdir,'pixel1_histogram.png')
         P.savefig(out)
         P.figure(3)
-        n, bins, patches = P.hist(pixel2_vec_np[5000:], 100, histtype='stepfilled',alpha=.3)
-        P.text(150, 800, 'Hist Mean: '+str(np.mean(pixel2_vec_np[5000:])) + '\n' +
+        n, bins, patches = P.hist(pixel2_vec_np[20000:], 100, histtype='stepfilled',alpha=.3)
+        P.text(150, 800, 'Hist Mean: '+str(np.mean(pixel2_vec_np[20000:])) + '\n' +
                         'Pix Real Value: ' + str(pixel2_val) + '\n' +
-                        'Hist Stdev: '+str(np.std(pixel2_vec_np[5000:])) + '\n' +
+                        'Hist Stdev: '+str(np.std(pixel2_vec_np[20000:])) + '\n' +
                         'Pixel Sigma: '+str((1/pixel2_weight)**.5),
                         style='italic',
                         bbox={'facecolor':'red', 'alpha':0.5, 'pad':10})
@@ -723,6 +723,6 @@ if __name__=='__main__':
                         , run_time = 500
                         )
     
-    test.run()
+    #test.run()
     test.plot_pixel_histograms()
 
