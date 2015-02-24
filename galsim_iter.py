@@ -109,7 +109,7 @@ class GalsimKernel:
         self.write_to_file_img_num = write_to_file_img_num
 
         #self.SN_fluxes = np.zeros(len(real_images))#initialize to zero
-        self.SN_fluxes = [0,1000,1000]
+        self.SN_fluxes = [0,1000,1000,1000]
         self.SN_RA_guesses = np.zeros(len(real_images))#initialize to zero
         self.SN_DEC_guesses = np.zeros(len(real_images))#initialize to zero
 
@@ -707,7 +707,7 @@ if __name__=='__main__':
 
     #image_nums = [0,1,5,9,13,17]
 
-    image_nums = [0,1,9]
+    image_nums = [0,1,9,13]
 
     real_images, weights_files, psf_files, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
 
@@ -727,7 +727,7 @@ if __name__=='__main__':
                         , galpos_decs = galpos_decs
                         , results_tag = 'pix_1arcsec'
                         , run_time = 600
-                        , write_to_file_img_num = 2
+                        , write_to_file_img_num = 3
                         )
     
     test.run()
