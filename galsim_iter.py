@@ -63,7 +63,7 @@ class GalsimKernel:
                  , model_img_index = 0
                  , background_mesh_pix_size = 256
                  , background_mesh_median_filter_size = 3 # A value of one means no filter is applied
-                 , write_to_file_img_num = 1
+                 , write_to_file_img_num = 0
                  ):
 
         if real_images is None:
@@ -133,7 +133,7 @@ class GalsimKernel:
 
         real_img_files = []
         [ real_img_files.append(os.path.join( file_path, real_image )) for real_image in real_images ]
-        
+
         weights_files_long = []
         [ weights_files_long.append(os.path.join( file_path, weights_file )) for weights_file in weights_files ] 
         
@@ -666,7 +666,7 @@ def get_all_image_names( image_dir ):
     exposure_nums = []
     field_ccds = []
 
-    print image_dir
+    #print image_dir
     
     for (dir, _, files) in os.walk( image_dir ):
         for f in files:
@@ -699,9 +699,15 @@ if __name__=='__main__':
 
     #image_nums = [0,1,2,3,4]
 
-    image_nums = [0,1]
+    #image_nums = [0,1,5,9,13,17]
+
+    image_nums = [5]
 
     real_images, weights_files, psf_files, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
+
+    #print real_images
+    #print filters
+    #raw_input()
 
     # Initial guess for model is real img without SN
     test = GalsimKernel( real_images = real_images
@@ -714,6 +720,7 @@ if __name__=='__main__':
                         , galpos_ras = galpos_ras
                         , galpos_decs = galpos_decs
                         , results_tag = 'pix_1arcsec'
+                        , run_time = 30
                         )
     
     test.run()
