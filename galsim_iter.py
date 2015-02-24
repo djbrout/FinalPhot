@@ -108,8 +108,8 @@ class GalsimKernel:
         self.background_mesh_median_filter_size = background_mesh_median_filter_size
         self.write_to_file_img_num = write_to_file_img_num
 
-        self.SN_fluxes = np.zeros(len(real_images))#initialize to zero
-        #self.SN_fluxes = [3000,3000]
+        #self.SN_fluxes = np.zeros(len(real_images))#initialize to zero
+        self.SN_fluxes = [0,1000]
         self.SN_RA_guesses = np.zeros(len(real_images))#initialize to zero
         self.SN_DEC_guesses = np.zeros(len(real_images))#initialize to zero
 
@@ -426,7 +426,7 @@ class GalsimKernel:
     """
     Adjusting the guess for the location and flux of the supernova
     """
-    def adjust_sn( self, stdev = 100):        
+    def adjust_sn( self, stdev = 25):        
         self.kicked_sns = self.sns
         for epoch in np.arange(len(self.sns)):
             self.SN_fluxes[epoch] += np.random.normal(scale = stdev )
@@ -732,7 +732,7 @@ if __name__=='__main__':
                         , galpos_ras = galpos_ras
                         , galpos_decs = galpos_decs
                         , results_tag = 'pix_1arcsec'
-                        , run_time = 120
+                        , run_time = 100
                         , write_to_file_img_num = 1
                         )
     
