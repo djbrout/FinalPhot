@@ -57,7 +57,7 @@ class GalsimKernel:
                  , weights_files = None
                  , outdir = None
                  , trim_edges = 1 # num pixels
-                 , coarse_pixel_scale = 1.0 #arcsec
+                 , coarse_pixel_scale = .26 #arcsec
                  , results_tag = 'test' 
                  , run_time = 180
                  , model_img_index = 0
