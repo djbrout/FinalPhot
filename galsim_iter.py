@@ -224,7 +224,7 @@ class GalsimKernel:
 
 
         # SET THE MODEL TO THE REAL DATA SPECIFIED BY THE INDEX GIVEN
-        self.model = self.real_data_stamps[model_img_index].array
+        self.model = self.real_data_stamps[model_img_index].array - self.galpos_backgrounds[0]
         self.model = np.ascontiguousarray(np.flipud(np.fliplr(self.model.T)))
 
         self.real_data_stamps_pixelated = []
@@ -288,8 +288,7 @@ class GalsimKernel:
         self.pixel_history = []
         self.accepted_history = 0.5
         self.accepted_int = 0
-        print 'Done Innitting, press enter to continue'
-        raw_input()
+        print 'Done Innitting'
 
     """
     This will manage the iterating process
@@ -300,9 +299,6 @@ class GalsimKernel:
         counter = 0
         t2 = time.time()
 
-
-
-        #while self.thischisq > self.satisfactory:
         while t2-t1 < self.run_time:
             t2 = time.time()
             counter += 1
@@ -460,12 +456,13 @@ class GalsimKernel:
         for epoch in np.arange(len(self.simulated_images)):
             this_sim_image_ravel = self.simulated_images[epoch].ravel()
             i = -1
-            chisq += np.sum( (this_sim_image_ravel - self.real_data_stamps_ravel[epoch])**2 * self.weights_stamps_ravel[epoch]
-                            )
+            chisq += np.sum( (this_sim_image_ravel + self.galpos_backgrounds[epoch] - self.real_data_stamps_ravel[epoch])**2 * self.weights_stamps_ravel[epoch])
+            #chisq += np.sum( (this_sim_image_ravel - self.real_data_stamps_ravel[epoch])**2 * self.weights_stamps_ravel[epoch])
             #for sim_pixel in this_sim_image_ravel:
             #    i += 1
             #    chisq += (sim_pixel - self.real_data_stamps_ravel[epoch][i])**2 * self.weights_stamps_ravel[epoch][i]
 
+        print chisq
         return chisq
 
     def pixelize( self, img, zoomxfactor=None ):
@@ -491,21 +488,23 @@ class GalsimKernel:
         import pylab as P
         data = np.load(self.results_npz)
         pixel_history = data['pixel_history']
-        sim_stamp = data['simulated_stamp']
-        real_stamp = data['data_stamp']
+        sim_stamps = data['simulated_stamps']
+        real_data_stamps = data['data_stamps']
 
+        print pixel_history
+        print pixel_history.shape
         pixel1_vec = []
         for step in pixel_history:
             pixel1_vec.append(step[2,1])
         pixel1_vec_np = np.asarray(pixel1_vec)
-        pixel1_weight = self.weights_stamp.array[2,1]
-        pixel1_val = self.real_data_stamp.array[2,1]
+        pixel1_weight = self.weights_stamps[0].array[2,1]
+        pixel1_val = self.real_data_stamps[0].array[2,1]
         pixel2_vec = []
         for step in pixel_history:
             pixel2_vec.append(step[2,5])
         pixel2_vec_np = np.asarray(pixel2_vec)
-        pixel2_weight = self.weights_stamp.array[2,5]
-        pixel2_val = self.real_data_stamp.array[2,5]
+        pixel2_weight = self.weights_stamps[0].array[2,5]
+        pixel2_val = self.real_data_stamps[0].array[2,5]
         pixel3_vec = []
         for step in pixel_history:
             pixel3_vec.append(step[2,4])
@@ -524,20 +523,20 @@ class GalsimKernel:
         out = os.path.join(self.outdir,'pixel_history.png')
         P.savefig(out)
         P.figure(2)
-        n, bins, patches = P.hist(pixel1_vec_np[50000:], 100, histtype='stepfilled',alpha=.3)
-        P.text(150, 800, 'Hist Mean: '+str(np.mean(pixel1_vec_np[50000:])) + '\n' +
+        n, bins, patches = P.hist(pixel1_vec_np[5000:], 100, histtype='stepfilled',alpha=.3)
+        P.text(150, 800, 'Hist Mean: '+str(np.mean(pixel1_vec_np[5000:])) + '\n' +
                         'Pix Real Value: ' + str(pixel1_val) + '\n' +
-                        'Hist Stdev: '+str(np.std(pixel1_vec_np[50000:])) + '\n' + 
+                        'Hist Stdev: '+str(np.std(pixel1_vec_np[5000:])) + '\n' + 
                         'Pixel sigma: '+str((1/pixel1_weight)**.5),
                         style='italic',
                         bbox={'facecolor':'red', 'alpha':0.5, 'pad':10})
         out = os.path.join(self.outdir,'pixel1_histogram.png')
         P.savefig(out)
         P.figure(3)
-        n, bins, patches = P.hist(pixel2_vec_np[50000:], 100, histtype='stepfilled',alpha=.3)
-        P.text(150, 800, 'Hist Mean: '+str(np.mean(pixel2_vec_np[50000:])) + '\n' +
+        n, bins, patches = P.hist(pixel2_vec_np[5000:], 100, histtype='stepfilled',alpha=.3)
+        P.text(150, 800, 'Hist Mean: '+str(np.mean(pixel2_vec_np[5000:])) + '\n' +
                         'Pix Real Value: ' + str(pixel2_val) + '\n' +
-                        'Hist Stdev: '+str(np.std(pixel2_vec_np[50000:])) + '\n' +
+                        'Hist Stdev: '+str(np.std(pixel2_vec_np[5000:])) + '\n' +
                         'Pixel Sigma: '+str((1/pixel2_weight)**.5),
                         style='italic',
                         bbox={'facecolor':'red', 'alpha':0.5, 'pad':10})
@@ -595,8 +594,10 @@ class GalsimKernel:
                             if this_image_SN_DEC > y_step:
                                 if this_image_SN_DEC < y_step + mesh_pixel_size:
                                     self.galpos_backgrounds[ index ] = background
-            print self.galpos_backgrounds
-            raw_input()
+            #print self.galpos_backgrounds
+            #raw_input()
+        #print self.galpos_backgrounds
+        #raw_input()
         return 
 
 
@@ -715,5 +716,5 @@ if __name__=='__main__':
                         )
     
     test.run()
-    #test.plot_pixel_histograms()
+    test.plot_pixel_histograms()
 
