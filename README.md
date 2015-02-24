@@ -34,7 +34,7 @@ MCMC Results
 Speed:
 ======
 
-At the moment, the code takes 0.09 seconds to run. 0.08 of that time is taken by Drawing...
+At the moment, the code takes 0.01 seconds to run through one epoch.
 
 
 TO DO LIST:
