@@ -64,7 +64,7 @@ class GalsimKernel:
                  , background_mesh_pix_size = 256
                  , background_mesh_median_filter_size = 3 # A value of one means no filter is applied
                  , write_to_file_img_num = 0
-                 , SN_flux_guesses = None
+                 , SN_counts_guesses = None
                  ):
 
         if real_images is None:
@@ -83,7 +83,7 @@ class GalsimKernel:
             raise AttributeError('Must provide psf_files in __init__')
         if weights_files is None:
             raise AttributeError('Must provide weights_files in __init__')     
-        if SN_flux_guesses is None:
+        if SN_counts_guesses is None:
             raise AttributeError('Must provide SN_flux_guesses in __init__') 
 
         print exposure_nums
@@ -112,7 +112,7 @@ class GalsimKernel:
         self.write_to_file_img_num = write_to_file_img_num
 
         #self.SN_fluxes = np.zeros(len(real_images))#initialize to zero
-        self.SN_fluxes = SN_flux_guesses
+        self.SN_fluxes = SN_counts_guesses
         self.SN_RA_guesses = np.zeros(len(real_images))#initialize to zero
         self.SN_DEC_guesses = np.zeros(len(real_images))#initialize to zero
 
@@ -370,12 +370,13 @@ class GalsimKernel:
     def copy_adjusted_image_to_model(self):
         self.model = self.kicked_model
         self.sns = self.kicked_sns
+        self.SN_fluxes = self.kicked_SN_fluxes
         return
 
     def update_history(self):
         #if self.thischisq < self.burn_in_chisq : #dont count burn-in period
         self.pixel_history.append( self.kicked_model )
-        self.sn_flux_history.append( self.kicked_sns )
+        self.sn_flux_history.append( self.kicked_SN_fluxes )
         return
 
 
@@ -433,8 +434,9 @@ class GalsimKernel:
     """
     def adjust_sn( self, stdev = 25):        
         self.kicked_sns = self.sns
+        self.kicked_SN_fluxes = self.SN_fluxes
         for epoch in np.arange(len(self.sns)):
-            self.SN_fluxes[epoch] += np.random.normal(scale = stdev )
+            self.kicked_SN_fluxes[epoch] += np.random.normal(scale = stdev )
             #self.SN_RA_guess += ra_adj
             #self.SN_DEC_guess += dec_adj
             self.kicked_sns[epoch] = galsim.Gaussian( sigma = 1.e-8, flux = self.SN_fluxes[epoch] )
@@ -709,8 +711,11 @@ if __name__=='__main__':
 
     #image_nums = [0,1,5,9,13,17]
 
-    image_nums = [0,1,9,13]
-    SN_counts_guesses = [0,1000,1000,1000]
+    #image_nums = [0,1,9,13]
+    #SN_counts_guesses = [0,1000,1000,1000]
+
+    image_nums = [0,1]
+    SN_counts_guesses = [0,0]
 
     real_images, weights_files, psf_files, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
 
@@ -730,7 +735,7 @@ if __name__=='__main__':
                         , galpos_decs = galpos_decs
                         , results_tag = 'pix_1arcsec'
                         , run_time = 600
-                        , write_to_file_img_num = 3
+                        , write_to_file_img_num = 1
                         , SN_counts_guesses = SN_counts_guesses
                         )
     
