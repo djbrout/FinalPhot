@@ -63,7 +63,7 @@ class GalsimKernel:
                  , model_img_index = 0
                  , background_mesh_pix_size = 256
                  , background_mesh_median_filter_size = 3 # A value of one means no filter is applied
-                 , write_to_file_img_num = 0
+                 , write_to_file_img_num = 1
                  ):
 
         if real_images is None:
