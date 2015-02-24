@@ -63,6 +63,7 @@ class GalsimKernel:
                  , model_img_index = 0
                  , background_mesh_pix_size = 256
                  , background_mesh_median_filter_size = 3 # A value of one means no filter is applied
+                 , write_to_file_img_num = 0
                  ):
 
         if real_images is None:
@@ -105,7 +106,7 @@ class GalsimKernel:
         self.ccd_nums = np.array(ccd_nums)
         self.which_filters = np.array(which_filters,dtype='string')
         self.background_mesh_median_filter_size = background_mesh_median_filter_size
-
+        self.write_to_file_img_num = write_to_file_img_num
 
         self.SN_fluxes = np.zeros(len(real_images))#initialize to zero
         self.SN_RA_guesses = np.zeros(len(real_images))#initialize to zero
@@ -256,7 +257,7 @@ class GalsimKernel:
         real_data_filename = 'test_data_out.fits'
         real_data_file_out = os.path.join( self.outdir, real_data_filename )
         os.system('rm '+real_data_file_out)
-        pf.writeto(real_data_file_out, self.real_data_stamps_trimmed[0])
+        pf.writeto(real_data_file_out, self.real_data_stamps_trimmed[self.write_to_file_img_num])
         
         #real_data_filename_beforepix = 'test_data_out_before_pix.fits'
         #real_data_file_out_beforepix = os.path.join( self.outdir, real_data_filename_beforepix )
@@ -317,7 +318,7 @@ class GalsimKernel:
                                 , data_stamps = self.real_data_stamps_trimmed
                                 )
         os.system( 'rm ' + self.simpixout )
-        pf.writeto( self.simpixout, self.simulated_images[0] )
+        pf.writeto( self.simpixout, self.simulated_images[self.write_to_file_img_num] )
 
 
     def mcmc(self):
@@ -698,7 +699,7 @@ if __name__=='__main__':
 
     #image_nums = [0,1,2,3,4]
 
-    image_nums = [0]
+    image_nums = [0,1]
 
     real_images, weights_files, psf_files, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
 
