@@ -261,10 +261,11 @@ class GalsimKernel:
         [ self.weights_stamps_ravel.append( weights_stamp.ravel() ) for weights_stamp in self.weights_stamps_trimmed ]
 
 
-        real_data_filename = 'test_data_out.fits'
-        real_data_file_out = os.path.join( self.outdir, real_data_filename )
-        os.system('rm '+real_data_file_out)
-        pf.writeto(real_data_file_out, self.real_data_stamps_trimmed[self.write_to_file_img_num])
+        for epoch in np.arange(len(self.galpos_ras)):
+            real_data_filename = 'test_data_expo'+str(int(self.exposure_nums[epoch]))+'_out.fits'
+            real_data_file_out = os.path.join( self.outdir, real_data_filename )
+            os.system('rm '+real_data_file_out)
+            pf.writeto(real_data_file_out, self.real_data_stamps_trimmed[epoch])
         
         #real_data_filename_beforepix = 'test_data_out_before_pix.fits'
         #real_data_file_out_beforepix = os.path.join( self.outdir, real_data_filename_beforepix )
@@ -331,8 +332,11 @@ class GalsimKernel:
                                 , data_stamps = self.real_data_stamps_trimmed
                                 , sn_flux_history  = self.sn_flux_history
                                 )
-        os.system( 'rm ' + self.simpixout )
-        pf.writeto( self.simpixout, self.simulated_images[self.write_to_file_img_num] )
+        for epoch in np.arange(len(self.galpos_ras)):
+            self.sim_full_filename = 'test_sim_expo'+str(int(self.exposure_nums[epoch]))+'_out.fits'
+            self.simpixout = os.path.join(self.outdir,self.sim_full_filename)
+            os.system( 'rm ' + self.simpixout )
+            pf.writeto( self.simpixout, self.simulated_images[epoch] )
 
         os.system( 'rm ' + self.model_file_out )
         pf.writeto( self.model_file_out, np.ascontiguousarray(np.flipud(np.fliplr(self.model.T))) )
@@ -725,8 +729,8 @@ if __name__=='__main__':
     #image_nums = [0,1,9,13]
     #SN_counts_guesses = [0,1000,1000,1000]
 
-    image_nums = [0,1,13]
-    SN_counts_guesses = [0,5000,5000]
+    image_nums = [0,1,13,17]
+    SN_counts_guesses = [0,5000,5000,5000]
 
     real_images, weights_files, psf_files, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
 
@@ -745,12 +749,12 @@ if __name__=='__main__':
                         , galpos_ras = galpos_ras
                         , galpos_decs = galpos_decs
                         , results_tag = 'pix_1arcsec'
-                        , run_time = 120
-                        , write_to_file_img_num = 1
+                        , run_time = 10
+                        , write_to_file_img_num = 2
                         , SN_counts_guesses = SN_counts_guesses
                         )
     
-    #test.run()
+    test.run()
     test.plot_pixel_histograms()
     #Check backgrounds
     #write all data and sim files to fits
