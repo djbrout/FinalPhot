@@ -301,7 +301,7 @@ class GalsimKernel:
         self.accepted_history = 0.5
         self.accepted_int = 0
         print 'Done Innitting'
-        raw_input()
+        #raw_input()
 
     """
     This will manage the iterating process
@@ -752,7 +752,7 @@ if __name__=='__main__':
                         , galpos_ras = galpos_ras
                         , galpos_decs = galpos_decs
                         , results_tag = 'pix_1arcsec'
-                        , run_time = 3
+                        , run_time = 300
                         , write_to_file_img_num = 2
                         , SN_counts_guesses = SN_counts_guesses
                         )
