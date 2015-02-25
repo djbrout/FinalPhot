@@ -541,23 +541,24 @@ class GalsimKernel:
         raw_input()
         P.plot(np.arange(0,len(sn_flux_history[0])),sn_flux_history[0])
         P.plot(np.arange(0,len(sn_flux_history[1])),sn_flux_history[1])
+        P.plot(np.arange(0,len(sn_flux_history[2])),sn_flux_history[2])
         out = os.path.join(self.outdir,'sn_counts_history.png')
         P.savefig(out)
         P.figure(2)
-        n, bins, patches = P.hist(pixel1_vec_np[5000:], 100, histtype='stepfilled',alpha=.3)
-        P.text(150, 800, 'Hist Mean: '+str(np.mean(pixel1_vec_np[5000:])) + '\n' +
+        n, bins, patches = P.hist(pixel1_vec_np[2000:], 100, histtype='stepfilled',alpha=.3)
+        P.text(150, 800, 'Hist Mean: '+str(np.mean(pixel1_vec_np[2000:])) + '\n' +
                         'Pix Real Value: ' + str(pixel1_val) + '\n' +
-                        'Hist Stdev: '+str(np.std(pixel1_vec_np[5000:])) + '\n' + 
+                        'Hist Stdev: '+str(np.std(pixel1_vec_np[2000:])) + '\n' + 
                         'Pixel sigma: '+str((1/pixel1_weight)**.5),
                         style='italic',
                         bbox={'facecolor':'red', 'alpha':0.5, 'pad':10})
         out = os.path.join(self.outdir,'pixel1_histogram.png')
         P.savefig(out)
         P.figure(3)
-        n, bins, patches = P.hist(pixel2_vec_np[5000:], 100, histtype='stepfilled',alpha=.3)
-        P.text(150, 800, 'Hist Mean: '+str(np.mean(pixel2_vec_np[5000:])) + '\n' +
+        n, bins, patches = P.hist(pixel2_vec_np[2000:], 100, histtype='stepfilled',alpha=.3)
+        P.text(150, 800, 'Hist Mean: '+str(np.mean(pixel2_vec_np[2000:])) + '\n' +
                         'Pix Real Value: ' + str(pixel2_val) + '\n' +
-                        'Hist Stdev: '+str(np.std(pixel2_vec_np[5000:])) + '\n' +
+                        'Hist Stdev: '+str(np.std(pixel2_vec_np[2000:])) + '\n' +
                         'Pixel Sigma: '+str((1/pixel2_weight)**.5),
                         style='italic',
                         bbox={'facecolor':'red', 'alpha':0.5, 'pad':10})
@@ -724,8 +725,8 @@ if __name__=='__main__':
     #image_nums = [0,1,9,13]
     #SN_counts_guesses = [0,1000,1000,1000]
 
-    image_nums = [0,1]
-    SN_counts_guesses = [0,5000]
+    image_nums = [0,1,13]
+    SN_counts_guesses = [0,5000,5000]
 
     real_images, weights_files, psf_files, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
 
@@ -749,7 +750,7 @@ if __name__=='__main__':
                         , SN_counts_guesses = SN_counts_guesses
                         )
     
-    test.run()
+    #test.run()
     test.plot_pixel_histograms()
     #Check backgrounds
     #write all data and sim files to fits
