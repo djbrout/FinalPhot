@@ -749,7 +749,7 @@ if __name__=='__main__':
                         , SN_counts_guesses = SN_counts_guesses
                         )
     
-    #test.run()
+    test.run()
     test.plot_pixel_histograms()
     #Check backgrounds
     #write all data and sim files to fits
