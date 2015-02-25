@@ -442,7 +442,8 @@ class GalsimKernel:
         self.kicked_sns = self.sns
         self.kicked_SN_fluxes = self.SN_fluxes
         for epoch in np.arange(len(self.sns)):
-            self.kicked_SN_fluxes[epoch] += np.random.normal(scale = stdev )
+            if self.kicked_SN_fluxes[epoch] != 0:
+                self.kicked_SN_fluxes[epoch] += np.random.normal(scale = stdev )
             #self.SN_RA_guess += ra_adj
             #self.SN_DEC_guess += dec_adj
             self.kicked_sns[epoch] = galsim.Gaussian( sigma = 1.e-8, flux = self.SN_fluxes[epoch] )
@@ -546,7 +547,7 @@ class GalsimKernel:
         P.plot(np.arange(0,len(sn_flux_history[0])),sn_flux_history[0])
         P.plot(np.arange(0,len(sn_flux_history[1])),sn_flux_history[1])
         P.plot(np.arange(0,len(sn_flux_history[2])),sn_flux_history[2])
-        P.plot(np.arange(0,len(sn_flux_history[3])),sn_flux_history[3])
+        #P.plot(np.arange(0,len(sn_flux_history[3])),sn_flux_history[3])
         out = os.path.join(self.outdir,'sn_counts_history.png')
         P.savefig(out)
         P.figure(2)
@@ -730,8 +731,8 @@ if __name__=='__main__':
     #image_nums = [0,1,9,13]
     #SN_counts_guesses = [0,1000,1000,1000]
 
-    image_nums = [0,1,13,17]
-    SN_counts_guesses = [0,5000,5000,5000]
+    image_nums = [0,1,13]
+    SN_counts_guesses = [0,5000,5000]
 
     real_images, weights_files, psf_files, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
 
@@ -750,12 +751,12 @@ if __name__=='__main__':
                         , galpos_ras = galpos_ras
                         , galpos_decs = galpos_decs
                         , results_tag = 'pix_1arcsec'
-                        , run_time = 600
+                        , run_time = 1000
                         , write_to_file_img_num = 2
                         , SN_counts_guesses = SN_counts_guesses
                         )
     
-    test.run()
+    #test.run()
     test.plot_pixel_histograms()
     #Check backgrounds
     #write all data and sim files to fits
