@@ -745,11 +745,11 @@ if __name__=='__main__':
                         , galpos_decs = galpos_decs
                         , results_tag = 'pix_1arcsec'
                         , run_time = 120
-                        , write_to_file_img_num = 0
+                        , write_to_file_img_num = 1
                         , SN_counts_guesses = SN_counts_guesses
                         )
     
-    test.run()
+    #test.run()
     test.plot_pixel_histograms()
     #Check backgrounds
     #write all data and sim files to fits
