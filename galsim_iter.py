@@ -301,6 +301,7 @@ class GalsimKernel:
         self.accepted_history = 0.5
         self.accepted_int = 0
         print 'Done Innitting'
+        raw_input()
 
     """
     This will manage the iterating process
@@ -731,12 +732,12 @@ if __name__=='__main__':
     #image_nums = [0,1,9,13]
     #SN_counts_guesses = [0,1000,1000,1000]
 
-    image_nums = [0,1,13]
+    image_nums = [0,1,17]
     SN_counts_guesses = [0,5000,5000]
 
     real_images, weights_files, psf_files, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
 
-    #print real_images
+    print real_images
     #print filters
     #raw_input()
 
@@ -751,12 +752,12 @@ if __name__=='__main__':
                         , galpos_ras = galpos_ras
                         , galpos_decs = galpos_decs
                         , results_tag = 'pix_1arcsec'
-                        , run_time = 1000
+                        , run_time = 3
                         , write_to_file_img_num = 2
                         , SN_counts_guesses = SN_counts_guesses
                         )
     
-    #test.run()
+    test.run()
     test.plot_pixel_histograms()
     #Check backgrounds
     #write all data and sim files to fits
