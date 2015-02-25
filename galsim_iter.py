@@ -55,6 +55,7 @@ class GalsimKernel:
                  , stamp_DEC = 18
                  , psf_files = None
                  , weights_files = None
+                 , star_files = None
                  , outdir = None
                  , trim_edges = 1 # num pixels
                  , coarse_pixel_scale = .26 #arcsec
@@ -85,6 +86,8 @@ class GalsimKernel:
             raise AttributeError('Must provide weights_files in __init__')     
         if SN_counts_guesses is None:
             raise AttributeError('Must provide SN_flux_guesses in __init__') 
+        if star_files is None:
+            raise AttributeError('Must provide star_files in __init__')
 
         print exposure_nums
         print len(exposure_nums)
@@ -110,6 +113,7 @@ class GalsimKernel:
         self.which_filters = np.array(which_filters,dtype='string')
         self.background_mesh_median_filter_size = background_mesh_median_filter_size
         self.write_to_file_img_num = write_to_file_img_num
+
 
         #self.SN_fluxes = np.zeros(len(real_images))#initialize to zero
         self.SN_fluxes = SN_counts_guesses
@@ -142,7 +146,9 @@ class GalsimKernel:
 
         weights_files_long = []
         [ weights_files_long.append(os.path.join( file_path, weights_file )) for weights_file in weights_files ] 
-        
+
+        self.star_files = star_files
+                
         #model_img_file = os.path.join( file_path, real_images[model_img_index] )
         
         self.DES_PSFEx_files = []
@@ -411,11 +417,11 @@ class GalsimKernel:
         # Convolve the model with the psf for each epoch and draw to stamp, then pixelize --> self.simulated_image
         for epoch in np.arange(len(self.DES_PSFEx_files)):
             #THE BACKGROUND IS CURRENTLY INSIDE THE CONVOLUTION...
-            background = galsim.Image( array = self.kicked_model*0.0 + self.galpos_backgrounds[epoch], scale = self.pixel_scale)
+            #background = galsim.Image( array = self.kicked_model*0.0 + self.galpos_backgrounds[epoch], scale = self.pixel_scale)
             
-            background_model = galsim.InterpolatedImage( image = background, x_interpolant = 'linear')
+            #background_model = galsim.InterpolatedImage( image = background, x_interpolant = 'linear')
 
-            self.gal_model = self.gal_model + background_model
+            #self.gal_model = self.gal_model + background_model
 
             # Combine galaxy model and supernova
             self.total_gal = self.gal_model + self.sns[epoch]
@@ -463,6 +469,9 @@ class GalsimKernel:
         self.kicked_model = self.model + self.deltas
         return
 
+    def get_zpt_of_data_img( self, nominal_zpt = 32.0):
+        return
+
     """
     Use Pearson Correlation to calculate r value (univariate gaussian distr)
     See Ivezic, Connolly, VanderPlas, Gray book p115
@@ -481,7 +490,7 @@ class GalsimKernel:
         for epoch in np.arange(len(self.simulated_images)):
             this_sim_image_ravel = self.simulated_images[epoch].ravel()
             i = -1
-            chisq += np.sum( (this_sim_image_ravel - self.real_data_stamps_ravel[epoch])**2 * self.weights_stamps_ravel[epoch])
+            chisq += np.sum( (this_sim_image_ravel + self.galpos_backgrounds[epoch] - self.real_data_stamps_ravel[epoch])**2 * self.weights_stamps_ravel[epoch])
             #chisq += np.sum( (this_sim_image_ravel - self.real_data_stamps_ravel[epoch])**2 * self.weights_stamps_ravel[epoch])
             #for sim_pixel in this_sim_image_ravel:
             #    i += 1
@@ -654,8 +663,10 @@ def read_query( file, image_dir, image_nums):
     filter_out = []
     exposure_nums_out = []
     ccd_nums_out = []
+    other_num = []
 
     query_wheres = {}
+
 
     for exposure in np.sort(np.unique( exposures )):
         #print 'exposure: ' + str(exposure)
@@ -670,6 +681,9 @@ def read_query( file, image_dir, image_nums):
                 filter_out.append( filts[ (exposures == exposure) & (ccds == ccd) ] )
                 exposure_nums_out.append(exposure)
                 ccd_nums_out.append(ccd)
+                #field_ccds.append()
+                other_num.append(str(image_paths[-1]).split('/')[-3].split('_')[0])
+
 
 
     psf_files = []
@@ -678,13 +692,16 @@ def read_query( file, image_dir, image_nums):
     filters = []
     exposure_nums = [] 
     ccd_nums = []
+    star_files = []
 
+    #STARCAT_20130927_SN-E1_g_01.LIST
 
     [ real_images.append(str(image_paths[image_num]).strip('[').strip(']').replace("'",'')) for image_num in image_nums ]
     [ psf_files.append(i.split('.')[0]+'.psf') for i in real_images ]
     [ weights_files.append(i.split('.')[0]+'.weight.fits') for i in real_images ]
     [ exposure_nums.append(exposure_nums_out[i]) for i in image_nums ]
     [ ccd_nums.append(ccd_nums_out[i]) for i in image_nums ]
+    [ star_files.append('/'.join(str(real_images[i]).split('/')[0:-1])+'/STARCAT_'+str(other_num[i])+'_SN-'+str(str(ccd_nums[i]).split('-')[0])+'_'+str(real_images[i]).split('/')[-2]+'.LIST') for i in np.arange(len(real_images))]
 
 
     galpos_ras = []
@@ -693,7 +710,7 @@ def read_query( file, image_dir, image_nums):
     [ galpos_decs.append(dec_pix[i]) for i in image_nums]
     [ filters.append(filter_out[i]) for i in image_nums]
 
-    return real_images, weights_files, psf_files, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums
+    return real_images, weights_files, psf_files, star_files, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums
 
 def get_all_image_names( image_dir ):
     images = []
@@ -738,14 +755,14 @@ if __name__=='__main__':
     #image_nums = [0,1,9,13]
     #SN_counts_guesses = [0,1000,1000,1000]
 
-    image_nums = [0,17,21,26]
-    SN_counts_guesses = [0,1,1,1]
+    #image_nums = [0,17,21,26]
+    #SN_counts_guesses = [0,1,1,1]
 
-    real_images, weights_files, psf_files, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
+    image_nums = [1]
+    SN_counts_guesses = [0]
 
-    print real_images
-    print filters
-    raw_input()
+    real_images, weights_files, psf_files, star_files, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
+
 
     # Initial guess for model is real img without SN
     test = GalsimKernel( real_images = real_images
@@ -754,6 +771,7 @@ if __name__=='__main__':
                         , ccd_nums = ccd_nums
                         , psf_files = psf_files
                         , weights_files = weights_files
+                        , star_files = star_files
                         , outdir = outdir 
                         , galpos_ras = galpos_ras
                         , galpos_decs = galpos_decs
