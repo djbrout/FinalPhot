@@ -296,6 +296,7 @@ class GalsimKernel:
 
         self.pixel_history = []
         self.sn_flux_history = []
+        [ self.sn_flux_history.append([]) for i in np.arange(len(self.galpos_ras))]
         self.accepted_history = 0.5
         self.accepted_int = 0
         print 'Done Innitting'
@@ -304,7 +305,7 @@ class GalsimKernel:
     This will manage the iterating process
     """
     def run( self ):
-        self.thischisq = 9999
+        self.thischisq = 999999.9
         self.t1 = time.time()
         self.counter = 0
         self.t2 = time.time()
@@ -376,14 +377,15 @@ class GalsimKernel:
     def update_history(self):
         #if self.thischisq < self.burn_in_chisq : #dont count burn-in period
         self.pixel_history.append( self.kicked_model )
-        self.sn_flux_history.append( self.kicked_SN_fluxes )
+        
+        [ self.sn_flux_history[epoch].append( self.kicked_SN_fluxes[epoch] ) for epoch in np.arange(len(self.kicked_SN_fluxes)) ]
         return
 
 
     def update_unaccepted_history(self):
         #if self.thischisq < self.burn_in_chisq :#dont count burn in period
         self.pixel_history.append( self.model )
-        self.sn_flux_history.append( self.SN_fluxes )
+        [ self.sn_flux_history[epoch].append( self.SN_fluxes[epoch] ) for epoch in np.arange(len(self.SN_fluxes)) ]
         return
 
     """                                                                                                                                    
@@ -432,7 +434,7 @@ class GalsimKernel:
     """
     Adjusting the guess for the location and flux of the supernova
     """
-    def adjust_sn( self, stdev = 25):        
+    def adjust_sn( self, stdev = 4):        
         self.kicked_sns = self.sns
         self.kicked_SN_fluxes = self.SN_fluxes
         for epoch in np.arange(len(self.sns)):
@@ -501,6 +503,7 @@ class GalsimKernel:
         pixel_history = data['pixel_history']
         sim_stamps = data['simulated_stamps']
         real_data_stamps = data['data_stamps']
+        sn_flux_history = data['sn_flux_history']
 
         print pixel_history
         print pixel_history.shape
@@ -533,21 +536,28 @@ class GalsimKernel:
         P.plot(np.arange(0,len(pixel4_vec_np)),pixel4_vec_np)
         out = os.path.join(self.outdir,'pixel_history.png')
         P.savefig(out)
+        P.figure(5)
+        print sn_flux_history
+        raw_input()
+        P.plot(np.arange(0,len(sn_flux_history[0])),sn_flux_history[0])
+        P.plot(np.arange(0,len(sn_flux_history[1])),sn_flux_history[1])
+        out = os.path.join(self.outdir,'sn_counts_history.png')
+        P.savefig(out)
         P.figure(2)
-        n, bins, patches = P.hist(pixel1_vec_np[20000:], 100, histtype='stepfilled',alpha=.3)
-        P.text(150, 800, 'Hist Mean: '+str(np.mean(pixel1_vec_np[20000:])) + '\n' +
+        n, bins, patches = P.hist(pixel1_vec_np[5000:], 100, histtype='stepfilled',alpha=.3)
+        P.text(150, 800, 'Hist Mean: '+str(np.mean(pixel1_vec_np[5000:])) + '\n' +
                         'Pix Real Value: ' + str(pixel1_val) + '\n' +
-                        'Hist Stdev: '+str(np.std(pixel1_vec_np[20000:])) + '\n' + 
+                        'Hist Stdev: '+str(np.std(pixel1_vec_np[5000:])) + '\n' + 
                         'Pixel sigma: '+str((1/pixel1_weight)**.5),
                         style='italic',
                         bbox={'facecolor':'red', 'alpha':0.5, 'pad':10})
         out = os.path.join(self.outdir,'pixel1_histogram.png')
         P.savefig(out)
         P.figure(3)
-        n, bins, patches = P.hist(pixel2_vec_np[20000:], 100, histtype='stepfilled',alpha=.3)
-        P.text(150, 800, 'Hist Mean: '+str(np.mean(pixel2_vec_np[20000:])) + '\n' +
+        n, bins, patches = P.hist(pixel2_vec_np[5000:], 100, histtype='stepfilled',alpha=.3)
+        P.text(150, 800, 'Hist Mean: '+str(np.mean(pixel2_vec_np[5000:])) + '\n' +
                         'Pix Real Value: ' + str(pixel2_val) + '\n' +
-                        'Hist Stdev: '+str(np.std(pixel2_vec_np[20000:])) + '\n' +
+                        'Hist Stdev: '+str(np.std(pixel2_vec_np[5000:])) + '\n' +
                         'Pixel Sigma: '+str((1/pixel2_weight)**.5),
                         style='italic',
                         bbox={'facecolor':'red', 'alpha':0.5, 'pad':10})
@@ -714,8 +724,8 @@ if __name__=='__main__':
     #image_nums = [0,1,9,13]
     #SN_counts_guesses = [0,1000,1000,1000]
 
-    image_nums = [0,1]
-    SN_counts_guesses = [0,0]
+    image_nums = [1]
+    SN_counts_guesses = [0]
 
     real_images, weights_files, psf_files, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
 
@@ -734,13 +744,13 @@ if __name__=='__main__':
                         , galpos_ras = galpos_ras
                         , galpos_decs = galpos_decs
                         , results_tag = 'pix_1arcsec'
-                        , run_time = 600
-                        , write_to_file_img_num = 1
+                        , run_time = 120
+                        , write_to_file_img_num = 0
                         , SN_counts_guesses = SN_counts_guesses
                         )
     
     test.run()
-    #test.plot_pixel_histograms()
+    test.plot_pixel_histograms()
     #Check backgrounds
     #write all data and sim files to fits
     #plot flux history
