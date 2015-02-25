@@ -23,5 +23,10 @@ pixelated and trimmed
 
 ![alt tag](https://raw.github.com/djbrout/FinalPhot/master/readme_files/sim_and_pix_working.png)
 
+TO DO
+============================
+
+* need to double check backgrounds by listing all files and looking visually as well as zooming out on sn and confirming that the mesh agrees with the local value.
+
 
 
