@@ -548,7 +548,7 @@ class GalsimKernel:
         P.plot(np.arange(0,len(sn_flux_history[0])),sn_flux_history[0])
         P.plot(np.arange(0,len(sn_flux_history[1])),sn_flux_history[1])
         P.plot(np.arange(0,len(sn_flux_history[2])),sn_flux_history[2])
-        #P.plot(np.arange(0,len(sn_flux_history[3])),sn_flux_history[3])
+        P.plot(np.arange(0,len(sn_flux_history[3])),sn_flux_history[3])
         out = os.path.join(self.outdir,'sn_counts_history.png')
         P.savefig(out)
         P.figure(2)
@@ -757,7 +757,7 @@ if __name__=='__main__':
                         , SN_counts_guesses = SN_counts_guesses
                         )
     
-    test.run()
+    #test.run()
     test.plot_pixel_histograms()
     #Check backgrounds
     #write all data and sim files to fits
