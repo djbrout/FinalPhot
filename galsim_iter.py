@@ -561,9 +561,9 @@ class GalsimKernel:
         print sn_flux_history
         raw_input()
         P.plot(np.arange(0,len(sn_flux_history[0])),sn_flux_history[0])
-        P.plot(np.arange(0,len(sn_flux_history[1])),sn_flux_history[1])
-        P.plot(np.arange(0,len(sn_flux_history[2])),sn_flux_history[2])
-        P.plot(np.arange(0,len(sn_flux_history[3])),sn_flux_history[3])
+        #P.plot(np.arange(0,len(sn_flux_history[1])),sn_flux_history[1])
+        #P.plot(np.arange(0,len(sn_flux_history[2])),sn_flux_history[2])
+        #P.plot(np.arange(0,len(sn_flux_history[3])),sn_flux_history[3])
         out = os.path.join(self.outdir,'sn_counts_history.png')
         P.savefig(out)
         P.figure(2)
@@ -759,10 +759,12 @@ if __name__=='__main__':
     #SN_counts_guesses = [0,1,1,1]
 
     image_nums = [1]
-    SN_counts_guesses = [0]
+    SN_counts_guesses = [3000]
 
     real_images, weights_files, psf_files, star_files, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
 
+    print star_files
+    raw_input()
 
     # Initial guess for model is real img without SN
     test = GalsimKernel( real_images = real_images
