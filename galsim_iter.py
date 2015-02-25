@@ -399,7 +399,7 @@ class GalsimKernel:
     def kernel( self ):
 
         # Convert model to galsim image
-        self.im = galsim.Image( array = self.kicked_model, scale = self.pixel_scale ) # scale is arcsec/pixel
+        self.im = galsim.Image( array = self.kicked_model , scale = self.pixel_scale ) # scale is arcsec/pixel
 
         # Create interpolated image (can mess around with interp methods...)
         self.big_fft_params = galsim.GSParams(maximum_fft_size=10240)
@@ -410,6 +410,12 @@ class GalsimKernel:
 
         # Convolve the model with the psf for each epoch and draw to stamp, then pixelize --> self.simulated_image
         for epoch in np.arange(len(self.DES_PSFEx_files)):
+            #THE BACKGROUND IS CURRENTLY INSIDE THE CONVOLUTION...
+            background = galsim.Image( array = self.kicked_model*0.0 + self.galpos_backgrounds[epoch], scale = self.pixel_scale)
+            
+            background_model = galsim.InterpolatedImage( image = background, x_interpolant = 'linear')
+
+            self.gal_model = self.gal_model + background_model
 
             # Combine galaxy model and supernova
             self.total_gal = self.gal_model + self.sns[epoch]
@@ -475,7 +481,7 @@ class GalsimKernel:
         for epoch in np.arange(len(self.simulated_images)):
             this_sim_image_ravel = self.simulated_images[epoch].ravel()
             i = -1
-            chisq += np.sum( (this_sim_image_ravel + self.galpos_backgrounds[epoch] - self.real_data_stamps_ravel[epoch])**2 * self.weights_stamps_ravel[epoch])
+            chisq += np.sum( (this_sim_image_ravel - self.real_data_stamps_ravel[epoch])**2 * self.weights_stamps_ravel[epoch])
             #chisq += np.sum( (this_sim_image_ravel - self.real_data_stamps_ravel[epoch])**2 * self.weights_stamps_ravel[epoch])
             #for sim_pixel in this_sim_image_ravel:
             #    i += 1
@@ -757,7 +763,7 @@ if __name__=='__main__':
                         , SN_counts_guesses = SN_counts_guesses
                         )
     
-    #test.run()
+    test.run()
     test.plot_pixel_histograms()
     #Check backgrounds
     #write all data and sim files to fits
