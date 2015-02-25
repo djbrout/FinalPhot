@@ -732,8 +732,8 @@ if __name__=='__main__':
     #image_nums = [0,1,9,13]
     #SN_counts_guesses = [0,1000,1000,1000]
 
-    image_nums = [17,21,26]
-    SN_counts_guesses = [1,1,1]
+    image_nums = [0,17,21,26]
+    SN_counts_guesses = [0,1,1,1]
 
     real_images, weights_files, psf_files, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
 
