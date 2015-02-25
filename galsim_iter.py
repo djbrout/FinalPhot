@@ -546,6 +546,7 @@ class GalsimKernel:
         P.plot(np.arange(0,len(sn_flux_history[0])),sn_flux_history[0])
         P.plot(np.arange(0,len(sn_flux_history[1])),sn_flux_history[1])
         P.plot(np.arange(0,len(sn_flux_history[2])),sn_flux_history[2])
+        P.plot(np.arange(0,len(sn_flux_history[3])),sn_flux_history[3])
         out = os.path.join(self.outdir,'sn_counts_history.png')
         P.savefig(out)
         P.figure(2)
@@ -749,7 +750,7 @@ if __name__=='__main__':
                         , galpos_ras = galpos_ras
                         , galpos_decs = galpos_decs
                         , results_tag = 'pix_1arcsec'
-                        , run_time = 10
+                        , run_time = 600
                         , write_to_file_img_num = 2
                         , SN_counts_guesses = SN_counts_guesses
                         )
