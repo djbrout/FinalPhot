@@ -8,14 +8,31 @@
 # By Dillon Brout                                                                                    
 # dbrout@physics.upenn.edu                                                                           
 
-def read(filename,headline,startline,delim=' '):
+def read(filename,headline,startline,delim=' ',stringstart=0):
     linenum = 0
     go = 0
     column_list = []
     return_cols = {}
     inf = open(filename)
     for line in inf:
+        line = line.replace('#','')
         cols = line.split(delim)
+        try:
+            cols.remove('')
+            cols.remove('')
+            cols.remove('')
+            cols.remove('')
+            cols.remove('')
+            cols.remove('')
+            cols.remove('')
+            cols.remove('')
+        except:
+            pass
+        try:
+            cols.remove('VARNAMES:')
+        except:
+            pass
+        print cols
         if linenum == headline - 1:
             for col in cols:
                 return_cols[col.strip()] = []

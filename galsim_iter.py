@@ -558,8 +558,6 @@ class GalsimKernel:
         out = os.path.join(self.outdir,'pixel_history.png')
         P.savefig(out)
         P.figure(5)
-        print sn_flux_history
-        raw_input()
         P.plot(np.arange(0,len(sn_flux_history[0])),sn_flux_history[0])
         #P.plot(np.arange(0,len(sn_flux_history[1])),sn_flux_history[1])
         #P.plot(np.arange(0,len(sn_flux_history[2])),sn_flux_history[2])
@@ -693,6 +691,7 @@ def read_query( file, image_dir, image_nums):
     exposure_nums = [] 
     ccd_nums = []
     star_files = []
+    other_nums = []
 
     #STARCAT_20130927_SN-E1_g_01.LIST
 
@@ -701,7 +700,8 @@ def read_query( file, image_dir, image_nums):
     [ weights_files.append(i.split('.')[0]+'.weight.fits') for i in real_images ]
     [ exposure_nums.append(exposure_nums_out[i]) for i in image_nums ]
     [ ccd_nums.append(ccd_nums_out[i]) for i in image_nums ]
-    [ star_files.append('/'.join(str(real_images[i]).split('/')[0:-1])+'/STARCAT_'+str(other_num[i])+'_SN-'+str(str(ccd_nums[i]).split('-')[0])+'_'+str(real_images[i]).split('/')[-2]+'.LIST') for i in np.arange(len(real_images))]
+    [ other_nums.append(other_num[i]) for i in image_nums ]
+    [ star_files.append('/'.join(str(real_images[i]).split('/')[0:-1])+'/STARCAT_'+str(other_nums[i])+'_SN-'+str(str(ccd_nums[i]).split('-')[0])+'_'+str(real_images[i]).split('/')[-2]+'.LIST') for i in np.arange(len(real_images))]
 
 
     galpos_ras = []
@@ -711,6 +711,14 @@ def read_query( file, image_dir, image_nums):
     [ filters.append(filter_out[i]) for i in image_nums]
 
     return real_images, weights_files, psf_files, star_files, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums
+
+def read_stars( files ):
+    for file in files:
+        read = rdcol.read( file.replace(' ','') , 4, 5, ' ', stringstart=1)
+        print read
+        raw_input()
+
+    return stariDs, starRAs, starDECs, starMags, starMagerrs
 
 def get_all_image_names( image_dir ):
     images = []
@@ -763,6 +771,8 @@ if __name__=='__main__':
 
     real_images, weights_files, psf_files, star_files, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
 
+    read_stars(star_files)
+
     print star_files
     raw_input()
 
@@ -773,7 +783,11 @@ if __name__=='__main__':
                         , ccd_nums = ccd_nums
                         , psf_files = psf_files
                         , weights_files = weights_files
-                        , star_files = star_files
+                        , stariDs = ''
+                        , starRAs = ''
+                        , starDECs = ''
+                        , starMags = ''
+                        , starMagerrs = ''
                         , outdir = outdir 
                         , galpos_ras = galpos_ras
                         , galpos_decs = galpos_decs
@@ -786,6 +800,4 @@ if __name__=='__main__':
     test.run()
     test.plot_pixel_histograms()
     #Check backgrounds
-    #write all data and sim files to fits
-    #plot flux history
 
