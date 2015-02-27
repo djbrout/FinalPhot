@@ -53,9 +53,11 @@ class GalsimKernel:
                  , satisfactory = 39 # process is iterated until chisq reaches this value
                  , stamp_RA = 18
                  , stamp_DEC = 18
+                 , star_stamp_RA = 4
+                 , star_stamp_DEC = 4
                  , psf_files = None
                  , weights_files = None
-                 , star_files = None
+                 , star_dicts = None
                  , outdir = None
                  , trim_edges = 1 # num pixels
                  , coarse_pixel_scale = .26 #arcsec
@@ -119,6 +121,8 @@ class GalsimKernel:
         self.SN_fluxes = SN_counts_guesses
         self.SN_RA_guesses = np.zeros(len(real_images))#initialize to zero
         self.SN_DEC_guesses = np.zeros(len(real_images))#initialize to zero
+
+        self.star_dicts = star_dicts
 
         self.galpos_ras = np.array( galpos_ras, dtype = float)
         self.galpos_decs = np.array( galpos_decs, dtype = float )
@@ -309,6 +313,36 @@ class GalsimKernel:
         print 'Done Innitting'
         #raw_input()
 
+    def get_zeropoint( self ):
+        self.thischisq = 999999.9
+        star_runtime = 2.0 # 2 seconds per star
+        self.t1 = time.time()
+        self.counter = 0
+        self.t2 = time.time()
+        self.star_zero_points = []
+        self.star_counts = []
+        for epoch in np.arange(len(self.galpos_ras)):
+            self.star_zero_points.append([])
+            self.star_counts.append([])
+            star_dict = self.star_dicts[epoch]
+            background = self.galpos_backgrounds[epoch]
+            index = -1
+            for cal_star in star_dict['OBJID']:
+                index += 1
+                cal_star_ra = star_dict['RA'][index]
+                cal_star_dec = star_dict['DEC'][index]
+                cal_star_mag = star_dict['mag'][index]
+
+                
+                #CREATE MODEL and RUN MCMC
+                while self.t2-self.t1 < self.run_time:
+                    count = star_mcmc(background)
+                
+                calculate_zero_point(cal_star_mag)
+                zero_points
+
+
+
     """
     This will manage the iterating process
     """
@@ -348,16 +382,24 @@ class GalsimKernel:
         os.system( 'rm ' + self.model_file_out )
         pf.writeto( self.model_file_out, np.ascontiguousarray(np.flipud(np.fliplr(self.model.T))) )
 
-    def mcmc(self):
+    
+    def star_mcmc(self,background):
+        self.adjust_cal_star_model()
+        self.cal_star_kernel()
+        self.thischisq = self.compare_sim_and_real_cal_stars()
+        accept_bool = self.accept()
+
+
+    def mcmc(self, isCalStar = False):
+        
         self.adjust_model() 
         self.adjust_sn()
-            
         self.kernel()
-        
         self.thischisq = self.compare_sim_and_real()
 
         #decide whether to accept new values
         accept_bool = self.accept()
+
 
         if accept_bool:
             #print 'accepted'
@@ -470,6 +512,7 @@ class GalsimKernel:
         return
 
     def get_zpt_of_data_img( self, nominal_zpt = 32.0):
+
         return
 
     """
@@ -691,6 +734,7 @@ def read_query( file, image_dir, image_nums):
     exposure_nums = [] 
     ccd_nums = []
     star_files = []
+    star_dicts = []
     other_nums = []
 
     #STARCAT_20130927_SN-E1_g_01.LIST
@@ -702,7 +746,7 @@ def read_query( file, image_dir, image_nums):
     [ ccd_nums.append(ccd_nums_out[i]) for i in image_nums ]
     [ other_nums.append(other_num[i]) for i in image_nums ]
     [ star_files.append('/'.join(str(real_images[i]).split('/')[0:-1])+'/STARCAT_'+str(other_nums[i])+'_SN-'+str(str(ccd_nums[i]).split('-')[0])+'_'+str(real_images[i]).split('/')[-2]+'.LIST') for i in np.arange(len(real_images))]
-
+    [ star_dicts.append(read_stars(star_file)) for star_file in star_files]
 
     galpos_ras = []
     galpos_decs = []
@@ -710,15 +754,12 @@ def read_query( file, image_dir, image_nums):
     [ galpos_decs.append(dec_pix[i]) for i in image_nums]
     [ filters.append(filter_out[i]) for i in image_nums]
 
-    return real_images, weights_files, psf_files, star_files, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums
+    return real_images, weights_files, psf_files, star_dicts, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums
 
-def read_stars( files ):
-    for file in files:
-        read = rdcol.read( file.replace(' ','') , 4, 5, ' ', stringstart=1)
-        print read
-        raw_input()
-
-    return stariDs, starRAs, starDECs, starMags, starMagerrs
+def read_stars( file ):
+    star_dict = rdcol.read( file.replace(' ','') , 4, 5, ' ')
+    #return stariDs, starRAs, starDECs, starMags, starMagerrs
+    return star_dict
 
 def get_all_image_names( image_dir ):
     images = []
@@ -766,15 +807,10 @@ if __name__=='__main__':
     #image_nums = [0,17,21,26]
     #SN_counts_guesses = [0,1,1,1]
 
-    image_nums = [1]
-    SN_counts_guesses = [3000]
+    image_nums = [0,1]
+    SN_counts_guesses = [0,3000]
 
-    real_images, weights_files, psf_files, star_files, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
-
-    read_stars(star_files)
-
-    print star_files
-    raw_input()
+    real_images, weights_files, psf_files, star_dicts, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
 
     # Initial guess for model is real img without SN
     test = GalsimKernel( real_images = real_images
@@ -783,11 +819,7 @@ if __name__=='__main__':
                         , ccd_nums = ccd_nums
                         , psf_files = psf_files
                         , weights_files = weights_files
-                        , stariDs = ''
-                        , starRAs = ''
-                        , starDECs = ''
-                        , starMags = ''
-                        , starMagerrs = ''
+                        , star_dicts = star_dicts
                         , outdir = outdir 
                         , galpos_ras = galpos_ras
                         , galpos_decs = galpos_decs
@@ -800,4 +832,6 @@ if __name__=='__main__':
     test.run()
     test.plot_pixel_histograms()
     #Check backgrounds
+    #deal with star_dicts
+    # CREATE MODEL OBJECT AND GIVE IT METHODS ON HOW TO ADJUST THE MODEL
 
