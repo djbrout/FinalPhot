@@ -367,7 +367,8 @@ class GalsimKernel:
                     raw_input()
             
                 #NEED TO TURN STAR COUNT HISTORIES INTO A MEAN VALUE!
-            self.image_zero_points.append( self.fit_image_zero_point( self.star_counts[epoch], star_dict['mag']))
+            mean_star_count = np.mean(self.star_counts[epoch][200:])
+            self.image_zero_points.append( self.fit_image_zero_point( mean_star_count, star_dict['mag']))
 
 
     def create_cal_star_model( self, epoch, ra, dec ):
@@ -825,6 +826,7 @@ class GalsimKernel:
     def get_background(self, epoch, ra, dec):
         x_step_int = -1
         image_size = np.shape(self.real_imgs[epoch])
+        print 'RA: '+str(ra)+' DEC: '+str(dec) 
         for x_step in np.arange( self.mesh_pixel_size, image_size[0], self.mesh_pixel_size ):
             x_step_int += 1
             y_step_int = -1
@@ -836,6 +838,7 @@ class GalsimKernel:
                             if dec < y_step + self.mesh_pixel_size:
                                 return self.image_meshes[epoch][ x_step_int, y_step_int ]
         #Raise warning starcat not in image...
+        raw_input()
         return None
 
 
@@ -994,6 +997,7 @@ if __name__=='__main__':
     
     test.run()
     test.plot_pixel_histograms()
+    #NEED TO FIGURE OUT HOW TO CONVERT STAR RA AND DEC TO PIXELS! PRobably need to read about wcs.
     #Check backgrounds
     #deal with star_dicts
     # CREATE MODEL OBJECT AND GIVE IT METHODS ON HOW TO ADJUST THE MODEL
