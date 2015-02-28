@@ -32,7 +32,6 @@ def read(filename,headline,startline,delim=' ',stringstart=0):
             cols.remove('VARNAMES:')
         except:
             pass
-        print cols
         if linenum == headline - 1:
             for col in cols:
                 return_cols[col.strip()] = []
