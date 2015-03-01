@@ -122,7 +122,7 @@ class GalsimKernel:
         self.which_filters = np.array(which_filters,dtype='string')
         self.background_mesh_median_filter_size = background_mesh_median_filter_size
         self.write_to_file_img_num = write_to_file_img_num
-
+        self.nominal_zpt = noiminal_zero_point
 
         #self.SN_fluxes = np.zeros(len(real_images))#initialize to zero
         self.SN_fluxes = SN_counts_guesses
@@ -292,12 +292,14 @@ class GalsimKernel:
 
         #add option here to load zeropoints instead of calclate
         zptfile = os.path.join(self.outdir,'zero_points.npz')
-        continu = self.check_if_all_zero_points_alread_exist(zptfile)
-        if continu:
-            'Are you sure you want to continue? you may be overwriting zeropoint infomration if the npz file has not changed....'
+        continu = self.check_if_all_zero_points_already_exist(zptfile)
+        print 'checking'
+        if not continu:
+            print 'Are you sure you want to continue? you may be overwriting zeropoint infomration if the npz file has not changed....'
             raw_input()
             self.get_zeropoint_multiplicative_factor()
         print 'Done with zeropoints'
+        self.what_are_the_zpt_outliers()
         self.get_real_images_on_same_zpt()
 
 
@@ -428,15 +430,18 @@ class GalsimKernel:
                         , star_counts_histories = self.star_counts_histories
                         )
 
-    def check_if_all_zero_points_alread_exist( self, zpt_file ):
+    def check_if_all_zero_points_already_exist( self, zpt_file ):
+        print 'inside'
         data = np.load(zpt_file)
         yesno = True
         index = -1
         for fle in self.real_img_files:
             index += 1
             if fle == data['image_file_names'][index]:
+                print 'good'
                 pass
             else:
+                print 'bad'
                 yesno = False
 
         if yesno:
@@ -445,7 +450,7 @@ class GalsimKernel:
             self.mean_star_counts = data['mean_star_counts']
             self.star_mags = data['star_mags']
             self.star_counts_histories = data['star_counts_histories']
-
+        print 'done'
         return yesno
 
     def create_cal_star_model( self, epoch, ra_degrees, dec_degrees ):
