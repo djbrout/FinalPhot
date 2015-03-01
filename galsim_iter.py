@@ -300,6 +300,7 @@ class GalsimKernel:
             self.get_zeropoint_multiplicative_factor()
         print 'Done with zeropoints'
         self.what_are_the_zpt_outliers()
+        #  NOT WORKING!!!!!!
         self.get_real_images_on_same_zpt()
 
 
@@ -452,6 +453,15 @@ class GalsimKernel:
             self.star_counts_histories = data['star_counts_histories']
         print 'done'
         return yesno
+
+    def what_are_the_zpt_outliers( self ):
+        print self.image_zero_points
+        print 2.5*np.log10(self.mean_star_counts)
+        print self.star_mags
+        print 'stop'
+        raw_input()
+
+
 
     def create_cal_star_model( self, epoch, ra_degrees, dec_degrees ):
 
