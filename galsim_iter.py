@@ -634,7 +634,7 @@ class GalsimKernel:
             print self.real_data_stamps_ravel[epoch]
             self.real_data_stamps_ravel[epoch] = self.real_data_stamps_ravel[epoch]*self.get_multiplicative_factor(self.image_zero_points[epoch])
             print self.real_data_stamps_ravel[epoch]
-            raw_input()
+            #raw_input()
         return
 
     """
@@ -1133,8 +1133,8 @@ if __name__=='__main__':
     #image_nums = [0,17,21,26]
     #SN_counts_guesses = [0,1,1,1]
 
-    image_nums = [0,1]
-    SN_counts_guesses = [0,3000]
+    image_nums = [0]
+    SN_counts_guesses = [0]
 
     real_images, weights_files, psf_files, star_dicts, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
 
