@@ -299,6 +299,7 @@ class GalsimKernel:
             print 'Are you sure you want to continue? you may be overwriting zeropoint infomration if the npz file has not changed....'
             raw_input()
             self.get_zeropoint_multiplicative_factor()
+        raw_input()
         print 'Done with zeropoints'
         self.what_are_the_zpt_outliers()
         #  NOT WORKING!!!!!!
@@ -366,8 +367,12 @@ class GalsimKernel:
             self.star_mags.append([])
             index = -1
 
-            for cal_star in ['395371']:
-            #for cal_star in star_dict['OBJID']:
+            #for cal_star in ['395371']:
+            #for cal_star in ['395238']:
+            for cal_star in star_dict['OBJID']:
+                dojust = False
+                if cal_star == 396065:
+                    dojust = True
                 self.cal_star_chisq_history = [999999.9]
                 self.this_cal_star_chisq = 999999.9
                 self.star_counts_histories[epoch][cal_star] = []
@@ -392,12 +397,13 @@ class GalsimKernel:
 
                     #and RUN MCMC
                     num_iter = 0
-                    while num_iter < 2000:
-                        num_iter += 1
-                        #print 'last chisq: '+str(self.cal_star_chisq_history[-1])
-                        self.star_mcmc(epoch,cal_star)
-                        #print 'this chisq: '+str(self.this_cal_star_chisq)
-                        #print self.star_counts_histories[epoch][cal_star]
+                    if dojust:
+                        while num_iter < 2000:
+                            num_iter += 1
+                            #print 'last chisq: '+str(self.cal_star_chisq_history[-1])
+                            self.star_mcmc(epoch,cal_star)
+                            #print 'this chisq: '+str(self.this_cal_star_chisq)
+                            #print self.star_counts_histories[epoch][cal_star]
                     '''P.figure(1)
                     P.imshow(self.cal_simulated_image)
                     out = os.path.join(self.outdir,'test_cal_sim.png')
@@ -426,6 +432,7 @@ class GalsimKernel:
                 #NEED TO TURN STAR COUNT HISTORIES INTO A MEAN VALUE!
             self.image_zero_points.append( self.fit_image_zero_point( self.mean_star_counts[epoch], self.star_mags[epoch]))
             out = os.path.join(self.outdir,'zero_points.npz')
+            raw_input()
             np.savez(out, image_zero_points = self.image_zero_points
                         , image_file_names = self.real_img_files
                         , mean_star_counts = self.mean_star_counts
@@ -466,7 +473,7 @@ class GalsimKernel:
         print b>10
         print ((a>22.0) & (b>10.0))
         print len(((a>22.0) & (b>10.0)))
-        print a[((a<21.3) & (b<9.0))]
+        print a[((a>22.) & (b>10.0))]
         P.scatter(b,a)
         out = os.path.join(self.outdir,'zero_point_test.png')
         P.savefig(out)
@@ -567,7 +574,7 @@ class GalsimKernel:
         P.savefig('./out/test_cal_sim.png')
         P.figure(2)
         P.imshow(self.cal_star_stamp_compare)
-        P.savefig('./out/test_cal_data.png')
+        P.savefig('./out/test_cal_data'+str(self.objid)+'.png')
         print 'saved images'
         raw_input()
 
@@ -663,7 +670,7 @@ class GalsimKernel:
 
     
     def star_mcmc( self, epoch, objid):
-        
+        self.objid = objid
         self.adjust_cal_star_model()
         self.cal_star_kernel()
         self.compare_sim_and_real_cal_stars()
