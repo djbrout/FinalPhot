@@ -24,6 +24,10 @@ import rdcol
 from scipy.ndimage.interpolation import zoom
 from scipy.ndimage.filters import median_filter
 
+import matplotlib
+matplotlib.use('Agg')
+import pylab as P
+
 # def meanclip(indata, clipsig=3.0, maxiter=5, converge_num=0.02, verbose=0):
 import sigma_clip
 
@@ -54,8 +58,8 @@ class GalsimKernel:
                  , satisfactory = 39 # process is iterated until chisq reaches this value
                  , stamp_RA = 18
                  , stamp_DEC = 18
-                 , star_stamp_RA = 4
-                 , star_stamp_DEC = 4
+                 , star_stamp_RA = 20
+                 , star_stamp_DEC = 20
                  , psf_files = None
                  , weights_files = None
                  , star_dicts = None
@@ -153,8 +157,8 @@ class GalsimKernel:
         #raw_input()
 
 
-        real_img_files = []
-        [ real_img_files.append(os.path.join( file_path, real_image )) for real_image in real_images ]
+        self.real_img_files = []
+        [ self.real_img_files.append(os.path.join( file_path, real_image )) for real_image in real_images ]
 
         weights_files_long = []
         [ weights_files_long.append(os.path.join( file_path, weights_file )) for weights_file in weights_files ] 
@@ -173,7 +177,7 @@ class GalsimKernel:
         self.outdir = outdir
 
         self.real_fits = []
-        [ self.real_fits.append(pf.open( real_img_file )) for real_img_file in real_img_files ]
+        [ self.real_fits.append(pf.open( real_img_file )) for real_img_file in self.real_img_files ]
         
         self.real_imgs = []
         [ self.real_imgs.append(real_fit[0].data) for real_fit in self.real_fits ]
@@ -190,8 +194,7 @@ class GalsimKernel:
         self.background_mesh()
         self.galpos_backgrounds = []
         [self.galpos_backgrounds.append(self.get_background(epoch, self.galpos_ras[epoch][0], self.galpos_decs[epoch][0] )) for epoch in np.arange(len(self.galpos_ras))]
-        print self.galpos_backgrounds
-        raw_input()
+        #print self.galpos_backgrounds
 
         ##SET THE MODEL IMAGE TO ONE OF THE REAL IMAGES (SET BY INPUT INDEX)
         #self.model_img = self.real_imgs[model_img_index]
@@ -210,7 +213,7 @@ class GalsimKernel:
         
         #get wcs information from real data file (this doesnt change as model changes)                                                
         self.wcss = []
-        [ self.wcss.append(galsim.FitsWCS( real_img_file )) for real_img_file in real_img_files ]
+        [ self.wcss.append(galsim.FitsWCS( real_img_file )) for real_img_file in self.real_img_files ]
 
         # Get psf over the entire ccd
         self.psf_models = []
@@ -231,25 +234,25 @@ class GalsimKernel:
 
         # Read in real image for comparison to model
         #NEED TO FIGURE OUT HOW/IF THIS NEEDS TO BE PIXELIZED
-        full_real_data_images = []
-        [full_real_data_images.append(galsim.fits.read( real_img_file )) for real_img_file in real_img_files]
-        full_weights = []
-        [ full_weights.append(galsim.fits.read( weights_file_long )) for weights_file_long in weights_files_long ]
+        self.full_real_data_images = []
+        [self.full_real_data_images.append(galsim.fits.read( real_img_file )) for real_img_file in self.real_img_files]
+        self.full_weights = []
+        [ self.full_weights.append(galsim.fits.read( weights_file_long )) for weights_file_long in weights_files_long ]
 
         # Chop out real data stamp for each epoch
         self.real_data_stamps = []
-        [ self.real_data_stamps.append(full_real_data_images[i][ galsim.BoundsI( int( self.galpos_ras[i][0]-self.stamp_RA ) 
+        [ self.real_data_stamps.append(self.full_real_data_images[i][ galsim.BoundsI( int( self.galpos_ras[i][0]-self.stamp_RA ) 
                                                                     , int( self.galpos_ras[i][0]+self.stamp_RA )
                                                                     , int( self.galpos_decs[i][0]-self.stamp_DEC )
                                                                     , int( self.galpos_decs[i][0]+self.stamp_DEC )
-                                                                    ) ]) for i in np.arange(len(full_real_data_images)) ]
+                                                                    ) ]) for i in np.arange(len(self.full_real_data_images)) ]
         # Chop out an uncertainty stamp for each epoch
         self.weights_stamps = []
-        [ self.weights_stamps.append(full_weights[i][ galsim.BoundsI( int( self.galpos_ras[i][0]-self.stamp_RA ) 
+        [ self.weights_stamps.append(self.full_weights[i][ galsim.BoundsI( int( self.galpos_ras[i][0]-self.stamp_RA ) 
                                                                     , int( self.galpos_ras[i][0]+self.stamp_RA )
                                                                     , int( self.galpos_decs[i][0]-self.stamp_DEC )
                                                                     , int( self.galpos_decs[i][0]+self.stamp_DEC )
-                                                                    ) ]) for i in np.arange(len(full_weights)) ]
+                                                                    ) ]) for i in np.arange(len(self.full_weights)) ]
 
 
         # SET THE MODEL TO THE REAL DATA SPECIFIED BY THE INDEX GIVEN
@@ -325,6 +328,8 @@ class GalsimKernel:
         [ self.sn_flux_history.append([]) for i in np.arange(len(self.galpos_ras))]
         self.accepted_history = 0.5
         self.accepted_int = 0
+
+        self.cal_flux_guess = 200
         print 'Done Innitting'
         #raw_input()
         return
@@ -349,86 +354,131 @@ class GalsimKernel:
                 cal_star_ra = star_dict['RA'][index]
                 cal_star_dec = star_dict['DEC'][index]
                 cal_star_mag = star_dict['mag_g'][index] #G BAND HARD CODED! NEED TO FIX!!!
-                self.cal_star_local_background = self.get_background( epoch, cal_star_ra, cal_star_dec )
-                print cal_star_ra
-                print cal_star_dec
-                print cal_star_mag
-                print self.cal_star_local_background
-                raw_input()
 
                 #CREATE MODEL 
-                self.create_cal_star_model( epoch, cal_star_ra, cal_star_dec)
+                self.create_cal_star_model( epoch, cal_star_ra, cal_star_dec)#THESE RA and DECS ARE IN DEGREES!
+                self.cal_star_local_background = self.get_background( epoch, self.cal_ra_pix, self.cal_dec_pix )
+
+                print 'OBJID: '+str(cal_star)
+                print 'Background: '+str(self.cal_star_local_background)
+
                 #and RUN MCMC
                 num_iter = 0
                 while num_iter < 1000:
                     num_iter += 1
-                    star_mcmc(background,epoch,cal_star)
-                    print 'mcmc stop'
-                    raw_input()
-            
+                    #print 'last chisq: '+str(self.cal_star_chisq_history[-1])
+                    self.star_mcmc(epoch,cal_star)
+                    #print 'this chisq: '+str(self.this_cal_star_chisq)
+                    #print self.star_counts_histories[epoch][cal_star]
+                P.figure(1)
+                P.imshow(self.cal_simulated_image)
+                out = os.path.join(self.outdir,'test_cal_sim.png')
+                P.savefig(out)
+                P.figure(2)
+                P.imshow(self.cal_star_stamp_compare)
+                out = os.path.join(self.outdir,'test_cal_data.png')
+
+                P.savefig(out)
+                print 'saved images'
+                P.figure(3)
+                P.hist(self.star_counts_histories[epoch][cal_star][200:], np.arange(14500,15500,25), histtype='stepfilled',alpha=.3)
+                P.ylim(ymax = 250, ymin = 0)
+                out = os.path.join(self.outdir,'cal_star_histogram.png')
+                P.savefig(out)
+                print 'Known mag: '+str(cal_star_mag)
+                print 'mean counts: '+str(np.mean(self.star_counts_histories[epoch][cal_star][200:]))
+                print 'std counts: '+str(np.std(self.star_counts_histories[epoch][cal_star][200:]))
+                print 'Calc mag: '+str(-2.5*np.log10(np.mean(self.star_counts_histories[epoch][cal_star][200:]))+32.0)
+                print 'calc mag std: '+str(-2.5*np.log10(np.std(self.star_counts_histories[epoch][cal_star][200:])))
+                raw_input()
+
                 #NEED TO TURN STAR COUNT HISTORIES INTO A MEAN VALUE!
             mean_star_count = np.mean(self.star_counts[epoch][200:])
             self.image_zero_points.append( self.fit_image_zero_point( mean_star_count, star_dict['mag']))
 
 
-    def create_cal_star_model( self, epoch, ra, dec ):
-        self.cal_star_stamp = self.real_imgs[epoch][ galsim.BoundsI( int( ra - self.star_stamp_RA ) 
-                                                                    , int( ra + self.star_stamp_RA )
-                                                                    , int( dec - self.star_stamp_DEC )
-                                                                    , int( dec + self.star_stamp_DEC )
+    def create_cal_star_model( self, epoch, ra_degrees, dec_degrees ):
+
+        self.cal_flux = 20000
+        self.cal_ra_degrees = ra_degrees
+        self.cal_dec_degrees = dec_degrees
+        
+        self.cal_star = galsim.Gaussian( sigma = 1.e-8, flux = self.cal_flux )
+                
+        self.cal_wcs = galsim.FitsWCS( self.real_img_files[epoch] )
+
+        celes = galsim.CelestialCoord(ra=ra_degrees*galsim.degrees, dec=dec_degrees*galsim.degrees)
+
+        out =  self.cal_wcs.toImage(celes)
+        
+        self.cal_ra_pix, self.cal_dec_pix = str(out).replace('(','').replace(')','').split(',')
+
+        self.cal_ra_pix = int(round(float(self.cal_ra_pix)))
+        self.cal_dec_pix = int(round(float(self.cal_dec_pix)))
+        print out
+        print self.cal_ra_pix
+        print self.cal_dec_pix
+
+
+        self.cal_image_pos = galsim.PositionD( self.cal_ra_pix, self.cal_dec_pix )
+
+        self.cal_star.shift( self.cal_image_pos )
+
+
+        self.cal_star_stamp = self.full_real_data_images[epoch][ galsim.BoundsI( int( self.cal_ra_pix - self.star_stamp_RA ) 
+                                                                    , int( self.cal_ra_pix + self.star_stamp_RA )
+                                                                    , int( self.cal_dec_pix - self.star_stamp_DEC )
+                                                                    , int( self.cal_dec_pix + self.star_stamp_DEC )
                                                                     ) ]
-        self.cal_weights_stamp = self.weights[epoch][ galsim.BoundsI( int( ra - self.star_stamp_RA ) 
-                                                                    , int( ra + self.star_stamp_RA )
-                                                                    , int( dec - self.star_stamp_DEC )
-                                                                    , int( dec + self.star_stamp_DEC )
+        self.cal_weights_stamp = self.full_weights[epoch][ galsim.BoundsI( int( self.cal_ra_pix - self.star_stamp_RA ) 
+                                                                    , int( self.cal_ra_pix + self.star_stamp_RA )
+                                                                    , int( self.cal_dec_pix - self.star_stamp_DEC )
+                                                                    , int( self.cal_dec_pix + self.star_stamp_DEC )
                                                                     ) ]
 
         self.cal_star_stamp_compare = self.cal_star_stamp.array[ self.trim_edges:-self.trim_edges
                                                     , self.trim_edges:-self.trim_edges ]
-        self.cal_weights_stamp_compare = self.cal_weights_stamp[ self.trim_edges:-self.trim_edges
+        self.cal_weights_stamp_compare = self.cal_weights_stamp.array[ self.trim_edges:-self.trim_edges
                                                     , self.trim_edges:-self.trim_edges ]
 
-        self.cal_flux = self.cal_flux_guess
-        self.cal_ra = ra
-        self.cal_dec = dec
-        
-        self.cal_star = galsim.Gaussian( sigma = 1.e-8, flux = self.cal_flux )
-        
-        self.cal_star.shift(galsim.PositionD( ra, dec ))
-        
-        self.cal_wcs = galsim.FitsWCS( self.real_imgs[epoch] )
 
         self.cal_global_psf = galsim.des.DES_PSFEx( self.DES_PSFEx_files[epoch], wcs=self.cal_wcs)
 
-        self.cal_image_pos = galsim.PositionD( ra, dec )
 
-        self.cal_local_psf = self.cal_global_psf(self.cal_image_pos)
+        self.cal_local_psf = self.cal_global_psf.getPSF(self.cal_image_pos)
 
         # galsim image of zeros (background will be accounted for when calculating chisquared)
-        self.cal_galsim_im = galsim.Image( array = np.zeros(self.cal_star_stamp.shape) , scale = self.pixel_scale ) # scale is arcsec/pixel
+        #print 'here'
+        self.cal_galsim_im = galsim.Image( array = np.zeros(self.cal_star_stamp.array.shape) + 1.0 , scale = self.pixel_scale ) # scale is arcsec/pixel
+        #print 'next'
         self.cal_model = galsim.InterpolatedImage( image = self.cal_galsim_im, x_interpolant = 'linear')
-
+        #print 'model created'
         return
 
-    def adjust_cal_star_model( self, stdev = 10):        
+    def adjust_cal_star_model( self, stdev = 100):        
         self.kicked_cal_flux = self.cal_flux
         self.kicked_cal_flux += np.random.normal( scale = stdev )
+        print 'kicked flux: ' +str(self.kicked_cal_flux)
         self.kicked_cal_star = galsim.Gaussian( sigma = 1.e-8, flux = self.kicked_cal_flux )
-        self.kicked_cal_star.shift(galsim.PositionD( self.cal_ra, self.cal_dec ))
+        self.kicked_cal_star.shift(galsim.PositionD( self.cal_ra_pix, self.cal_dec_pix ))
         return
 
     def cal_star_kernel( self ):
 
-        self.cal_total_gal = self.cal_model + self.cal_star      
+
+
+
+        self.cal_total_gal = self.cal_model + self.kicked_cal_star      
 
         # Convolve with psf
         self.cal_final_big_fft = galsim.Convolve( [self.cal_total_gal, self.cal_local_psf], gsparams = self.big_fft_params )
+
 
         # create a blank stamp to be used by drawImage
         self.cal_sim_stamp = galsim.ImageF( self.star_stamp_RA*2 + 1, self.star_stamp_DEC*2 + 1, 
                                         wcs = self.cal_wcs.local(image_pos=self.cal_image_pos) )
 
-        self.cal_final_out_image = self.final_big_fft.drawImage( image = self.cal_sim_stamp, wcs = self.cal_wcs.local( image_pos = self.cal_image_pos ) )
+        self.cal_final_out_image = self.cal_final_big_fft.drawImage( image = self.cal_sim_stamp, wcs = self.cal_wcs.local( image_pos = self.cal_image_pos ) )
 
         self.cal_sim_img = self.cal_final_out_image.array
         #self.sim_img_pix = self.pixelize( self.final_out_image.array )
@@ -436,14 +486,21 @@ class GalsimKernel:
         self.cal_simulated_image = self.cal_sim_img[ self.trim_edges:-self.trim_edges
                                                     , self.trim_edges:-self.trim_edges
                                                 ]
+        #P.figure(1)
+        #P.imshow(self.cal_simulated_image)
+        #P.savefig('./out/test_cal_sim.png')
+        #P.figure(2)
+        #P.imshow(self.cal_star_stamp_compare)
+        #P.savefig('./out/test_cal_data.png')
+        #print 'saved images'
 
     def compare_sim_and_real_cal_stars(self):
         sim = self.cal_simulated_image.ravel()
         real = self.cal_star_stamp_compare.ravel()
         weights = self.cal_weights_stamp_compare.ravel()
-        chisq = np.sum( (sim + self.cal_star_local_background - real)**2 * weights)
+        self.this_cal_star_chisq = np.sum( (sim + self.cal_star_local_background - 1 - real)**2 * weights)
         
-        return chisq
+        return 
 
     '''
        Force slope to be 2.5 on fit of m vs logC. fit for zpt
@@ -522,7 +579,7 @@ class GalsimKernel:
         
         self.adjust_cal_star_model()
         self.cal_star_kernel()
-        self.this_cal_star_chisq = self.compare_sim_and_real_cal_stars()
+        self.compare_sim_and_real_cal_stars()
         accept_bool = self.accept( self.cal_star_chisq_history, self.this_cal_star_chisq )
         if accept_bool:
             print 'accepted'
@@ -533,6 +590,7 @@ class GalsimKernel:
         else:
             #self.accepted_history = ( self.accepted_history * self.accepted_int ) / ( self.accepted_int + 1 )
             self.update_unaccepted_cal_history( epoch, objid )
+            #self.cal_star_chisq_history.append( self.cal_star_chisq_history[-1] )
 
     def mcmc(self, isCalStar = False):
         
@@ -576,7 +634,7 @@ class GalsimKernel:
         return
 
     def update_cal_star_history(self, epoch, objid):
-        self.star_count_histories[epoch][objid].append(self.kicked_cal_flux)
+        self.star_counts_histories[epoch][objid].append(self.kicked_cal_flux)
         return
 
     def update_history(self):
@@ -586,8 +644,8 @@ class GalsimKernel:
         [ self.sn_flux_history[epoch].append( self.kicked_SN_fluxes[epoch] ) for epoch in np.arange(len(self.kicked_SN_fluxes)) ]
         return
 
-    def update_unnaccepted_cal_history(self, epoch, objid):
-        self.star_count_histories[epoch][objid].append(self.kicked_cal_flux)
+    def update_unaccepted_cal_history(self, epoch, objid):
+        self.star_counts_histories[epoch][objid].append(self.cal_flux)
         return
 
     def update_unaccepted_history(self):
@@ -1001,4 +1059,4 @@ if __name__=='__main__':
     #Check backgrounds
     #deal with star_dicts
     # CREATE MODEL OBJECT AND GIVE IT METHODS ON HOW TO ADJUST THE MODEL
-
+    # ADD THE OPTION TO FEED IN GALAXY POSITIONS IN DEGRES! AND OTHER UNITS
