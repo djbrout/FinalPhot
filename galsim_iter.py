@@ -284,13 +284,25 @@ class GalsimKernel:
         self.weights_stamps_ravel = []
         [ self.weights_stamps_ravel.append( weights_stamp.ravel() ) for weights_stamp in self.weights_stamps_trimmed ]
 
+        for epoch in np.arange(len(self.galpos_ras)):
+            real_data_filename = 'test_data_expo'+str(int(self.exposure_nums[epoch]))+'_out.fits'
+            real_data_file_out = os.path.join( self.outdir, real_data_filename )
+            os.system('rm '+real_data_file_out)
+            pf.writeto(real_data_file_out, self.real_data_stamps_trimmed[epoch])
 
-        self.get_zeropoint_multiplicative_factor()
+        #add option here to load zeropoints instead of calclate
+        zptfile = os.path.join(self.outdir,'zero_points.npz')
+        continu = self.check_if_all_zero_points_alread_exist(zptfile)
+        if continu:
+            'Are you sure you want to continue? you may be overwriting zeropoint infomration if the npz file has not changed....'
+            raw_input()
+            self.get_zeropoint_multiplicative_factor()
+        print 'Done with zeropoints'
         self.get_real_images_on_same_zpt()
 
 
         for epoch in np.arange(len(self.galpos_ras)):
-            real_data_filename = 'test_data_expo'+str(int(self.exposure_nums[epoch]))+'_out.fits'
+            real_data_filename = 'test_data_expo'+str(int(self.exposure_nums[epoch]))+'_out_zeropointed.fits'
             real_data_file_out = os.path.join( self.outdir, real_data_filename )
             os.system('rm '+real_data_file_out)
             pf.writeto(real_data_file_out, self.real_data_stamps_trimmed[epoch])
@@ -340,10 +352,14 @@ class GalsimKernel:
         self.star_counts_histories = []
         self.image_zero_points = []
         self.image_zpt_multiplicative_factor = []
+        self.mean_star_counts = []
+        self.star_mags = []
         
         for epoch in np.arange(len(self.galpos_ras)):
             self.star_counts_histories.append({})
             star_dict = self.star_dicts[epoch]
+            self.mean_star_counts.append([])
+            self.star_mags.append([])
             index = -1
 
             for cal_star in star_dict['OBJID']:
@@ -355,47 +371,82 @@ class GalsimKernel:
                 cal_star_dec = star_dict['DEC'][index]
                 cal_star_mag = star_dict['mag_g'][index] #G BAND HARD CODED! NEED TO FIX!!!
 
+                continu = True
                 #CREATE MODEL 
-                self.create_cal_star_model( epoch, cal_star_ra, cal_star_dec)#THESE RA and DECS ARE IN DEGREES!
+                try:
+                    self.create_cal_star_model( epoch, cal_star_ra, cal_star_dec)#THESE RA and DECS ARE IN DEGREES!
+                except RuntimeError:
+                    continu = False
                 self.cal_star_local_background = self.get_background( epoch, self.cal_ra_pix, self.cal_dec_pix )
+                if self.cal_star_local_background is None:
+                    continu = False
+                if continu:
 
-                print 'OBJID: '+str(cal_star)
-                print 'Background: '+str(self.cal_star_local_background)
+                    print 'OBJID: '+str(cal_star)
+                    print 'Background: '+str(self.cal_star_local_background)
 
-                #and RUN MCMC
-                num_iter = 0
-                while num_iter < 1000:
-                    num_iter += 1
-                    #print 'last chisq: '+str(self.cal_star_chisq_history[-1])
-                    self.star_mcmc(epoch,cal_star)
-                    #print 'this chisq: '+str(self.this_cal_star_chisq)
-                    #print self.star_counts_histories[epoch][cal_star]
-                P.figure(1)
-                P.imshow(self.cal_simulated_image)
-                out = os.path.join(self.outdir,'test_cal_sim.png')
-                P.savefig(out)
-                P.figure(2)
-                P.imshow(self.cal_star_stamp_compare)
-                out = os.path.join(self.outdir,'test_cal_data.png')
+                    #and RUN MCMC
+                    num_iter = 0
+                    while num_iter < 2000:
+                        num_iter += 1
+                        #print 'last chisq: '+str(self.cal_star_chisq_history[-1])
+                        self.star_mcmc(epoch,cal_star)
+                        #print 'this chisq: '+str(self.this_cal_star_chisq)
+                        #print self.star_counts_histories[epoch][cal_star]
+                    '''P.figure(1)
+                    P.imshow(self.cal_simulated_image)
+                    out = os.path.join(self.outdir,'test_cal_sim.png')
+                    P.savefig(out)
+                    P.figure(2)
+                    P.imshow(self.cal_star_stamp_compare)
+                    out = os.path.join(self.outdir,'test_cal_data.png')
 
-                P.savefig(out)
-                print 'saved images'
-                P.figure(3)
-                P.hist(self.star_counts_histories[epoch][cal_star][200:], np.arange(14500,15500,25), histtype='stepfilled',alpha=.3)
-                P.ylim(ymax = 250, ymin = 0)
-                out = os.path.join(self.outdir,'cal_star_histogram.png')
-                P.savefig(out)
-                print 'Known mag: '+str(cal_star_mag)
-                print 'mean counts: '+str(np.mean(self.star_counts_histories[epoch][cal_star][200:]))
-                print 'std counts: '+str(np.std(self.star_counts_histories[epoch][cal_star][200:]))
-                print 'Calc mag: '+str(-2.5*np.log10(np.mean(self.star_counts_histories[epoch][cal_star][200:]))+32.0)
-                print 'calc mag std: '+str(-2.5*np.log10(np.std(self.star_counts_histories[epoch][cal_star][200:])))
-                raw_input()
+                    P.savefig(out)
+                    print 'saved images'
+                    P.figure(3)
+                    P.hist(self.star_counts_histories[epoch][cal_star][200:], np.arange(14500,15500,25), histtype='stepfilled',alpha=.3)
+                    P.ylim(ymax = 250, ymin = 0)
+                    out = os.path.join(self.outdir,'cal_star_histogram.png')
+                    P.savefig(out)
+                    print 'Known mag: '+str(cal_star_mag)
+                    print 'mean counts: '+str(np.mean(self.star_counts_histories[epoch][cal_star][200:]))
+                    print 'std counts: '+str(np.std(self.star_counts_histories[epoch][cal_star][200:]))
+                    print 'Calc mag: '+str(-2.5*np.log10(np.mean(self.star_counts_histories[epoch][cal_star][200:]))+32.0)
+                    print 'calc mag std: '+str(-2.5*np.log10(np.std(self.star_counts_histories[epoch][cal_star][200:])))
+                    raw_input()
+                    '''
+                    self.mean_star_counts[epoch].append(np.mean(self.star_counts_histories[epoch][cal_star][1400:]))
+                    self.star_mags[epoch].append(cal_star_mag)
 
                 #NEED TO TURN STAR COUNT HISTORIES INTO A MEAN VALUE!
-            mean_star_count = np.mean(self.star_counts[epoch][200:])
-            self.image_zero_points.append( self.fit_image_zero_point( mean_star_count, star_dict['mag']))
+            self.image_zero_points.append( self.fit_image_zero_point( self.mean_star_counts[epoch], self.star_mags[epoch]))
+            out = os.path.join(self.outdir,'zero_points.npz')
+            np.savez(out, image_zero_points = self.image_zero_points
+                        , image_file_names = self.real_img_files
+                        , mean_star_counts = self.mean_star_counts
+                        , star_mags = self.star_mags
+                        , star_counts_histories = self.star_counts_histories
+                        )
 
+    def check_if_all_zero_points_alread_exist( self, zpt_file ):
+        data = np.load(zpt_file)
+        yesno = True
+        index = -1
+        for fle in self.real_img_files:
+            index += 1
+            if fle == data['image_file_names'][index]:
+                pass
+            else:
+                yesno = False
+
+        if yesno:
+            self.image_zero_points = data['image_zero_points']
+            self.real_img_files = data['image_file_names']
+            self.mean_star_counts = data['mean_star_counts']
+            self.star_mags = data['star_mags']
+            self.star_counts_histories = data['star_counts_histories']
+
+        return yesno
 
     def create_cal_star_model( self, epoch, ra_degrees, dec_degrees ):
 
@@ -458,15 +509,12 @@ class GalsimKernel:
     def adjust_cal_star_model( self, stdev = 100):        
         self.kicked_cal_flux = self.cal_flux
         self.kicked_cal_flux += np.random.normal( scale = stdev )
-        print 'kicked flux: ' +str(self.kicked_cal_flux)
+        #print 'kicked flux: ' +str(self.kicked_cal_flux)
         self.kicked_cal_star = galsim.Gaussian( sigma = 1.e-8, flux = self.kicked_cal_flux )
         self.kicked_cal_star.shift(galsim.PositionD( self.cal_ra_pix, self.cal_dec_pix ))
         return
 
     def cal_star_kernel( self ):
-
-
-
 
         self.cal_total_gal = self.cal_model + self.kicked_cal_star      
 
@@ -506,17 +554,27 @@ class GalsimKernel:
        Force slope to be 2.5 on fit of m vs logC. fit for zpt
     '''
     def fit_image_zero_point(self, star_counts, star_mags):
-        slope = 2.5
+        #slope = -2.5
         zpts = []
         chisqs = []
-        for zpt in np.arange(0,50,.001):
-            zpts.append(zpt)
-            expected_mags = -slope*math.log10(star_counts) + zpt
-            chisqs.append( stats.chisquare(star_mags,f_exp=expected_mags)[0] )
-        zpts = np.array(zpts)
-        chisqs = np.array(chisqs)
-        zero_point = zpts[np.argmin(chisqs)]
+        P.scatter(2.5*np.log10(star_counts),star_mags)
+        slope, zero_point, r_value, p_value, std_err = stats.linregress(float(2.5)*np.log10(star_counts),star_mags)
 
+        out = os.path.join(self.outdir,'zero_point_one_image.png')
+        P.xlabel('2.5*log10(counts)')
+        P.ylabel('cal star mag')
+        P.xlim(xmax = 15, xmin = 0)
+        P.ylim(ymax = 33, ymin = 15)
+        P.savefig(out)
+        P.scatter(2.5*np.log10(star_counts),star_mags)
+        P.xlabel('2.5*log10(counts)')
+        P.ylabel('cal star mag')
+
+        P.plot(np.arange(0.,100.,1.),slope*np.arange(0.,100.,1.)+zero_point)
+        out = os.path.join(self.outdir,'zero_point_one_image_Secnd.png')
+        P.savefig(out)
+        print 'zpt: '+str(zero_point)
+        #raw_input()
         return zero_point
 
 
@@ -582,7 +640,7 @@ class GalsimKernel:
         self.compare_sim_and_real_cal_stars()
         accept_bool = self.accept( self.cal_star_chisq_history, self.this_cal_star_chisq )
         if accept_bool:
-            print 'accepted'
+            #print 'accepted'
             #self.accepted_history = ( self.accepted_history * self.accepted_int + 1.0 ) / ( self.accepted_int + 1 )
             self.copy_adjusted_cal_model()
             self.update_cal_star_history( epoch, objid )
@@ -896,7 +954,7 @@ class GalsimKernel:
                             if dec < y_step + self.mesh_pixel_size:
                                 return self.image_meshes[epoch][ x_step_int, y_step_int ]
         #Raise warning starcat not in image...
-        raw_input()
+        #raw_input()
         return None
 
 
@@ -1055,8 +1113,8 @@ if __name__=='__main__':
     
     test.run()
     test.plot_pixel_histograms()
-    #NEED TO FIGURE OUT HOW TO CONVERT STAR RA AND DEC TO PIXELS! PRobably need to read about wcs.
+    #save zeropoints
     #Check backgrounds
-    #deal with star_dicts
+
     # CREATE MODEL OBJECT AND GIVE IT METHODS ON HOW TO ADJUST THE MODEL
     # ADD THE OPTION TO FEED IN GALAXY POSITIONS IN DEGRES! AND OTHER UNITS
