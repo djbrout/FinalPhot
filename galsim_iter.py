@@ -73,7 +73,7 @@ class GalsimKernel:
                  , background_mesh_median_filter_size = 3 # A value of one means no filter is applied
                  , write_to_file_img_num = 0
                  , SN_counts_guesses = None
-                 , noiminal_zero_point = 32.0 #from starcals
+                 , noiminal_zero_point = 31.6 #from starcals
                  ):
 
         if real_images is None:
@@ -1150,7 +1150,7 @@ if __name__=='__main__':
                         , galpos_ras = galpos_ras
                         , galpos_decs = galpos_decs
                         , results_tag = 'pix_1arcsec'
-                        , run_time = 300
+                        , run_time = 60
                         , write_to_file_img_num = 2
                         , SN_counts_guesses = SN_counts_guesses
                         )
