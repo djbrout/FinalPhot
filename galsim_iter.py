@@ -294,14 +294,15 @@ class GalsimKernel:
         zptfile = os.path.join(self.outdir,'zero_points.npz')
         continu = self.check_if_all_zero_points_already_exist(zptfile)
         print 'checking'
-        continu = False
+        #continu = False
         if not continu:
             print 'Are you sure you want to continue? you may be overwriting zeropoint infomration if the npz file has not changed....'
             raw_input()
             self.get_zeropoint_multiplicative_factor()
-        raw_input()
+        #raw_input()
         print 'Done with zeropoints'
-        self.what_are_the_zpt_outliers()
+        #self.what_are_the_zpt_outliers()
+        
         #  NOT WORKING!!!!!!
         self.get_real_images_on_same_zpt()
 
@@ -397,13 +398,13 @@ class GalsimKernel:
 
                     #and RUN MCMC
                     num_iter = 0
-                    if dojust:
-                        while num_iter < 2000:
-                            num_iter += 1
-                            #print 'last chisq: '+str(self.cal_star_chisq_history[-1])
-                            self.star_mcmc(epoch,cal_star)
-                            #print 'this chisq: '+str(self.this_cal_star_chisq)
-                            #print self.star_counts_histories[epoch][cal_star]
+                    #if dojust:
+                    while num_iter < 2000:
+                        num_iter += 1
+                        #print 'last chisq: '+str(self.cal_star_chisq_history[-1])
+                        self.star_mcmc(epoch,cal_star)
+                        #print 'this chisq: '+str(self.this_cal_star_chisq)
+                        #print self.star_counts_histories[epoch][cal_star]
                     '''P.figure(1)
                     P.imshow(self.cal_simulated_image)
                     out = os.path.join(self.outdir,'test_cal_sim.png')
@@ -432,7 +433,7 @@ class GalsimKernel:
                 #NEED TO TURN STAR COUNT HISTORIES INTO A MEAN VALUE!
             self.image_zero_points.append( self.fit_image_zero_point( self.mean_star_counts[epoch], self.star_mags[epoch]))
             out = os.path.join(self.outdir,'zero_points.npz')
-            raw_input()
+            #raw_input()
             np.savez(out, image_zero_points = self.image_zero_points
                         , image_file_names = self.real_img_files
                         , mean_star_counts = self.mean_star_counts
@@ -569,14 +570,14 @@ class GalsimKernel:
         self.cal_simulated_image = self.cal_sim_img[ self.trim_edges:-self.trim_edges
                                                     , self.trim_edges:-self.trim_edges
                                                 ]
-        P.figure(1)
-        P.imshow(self.cal_simulated_image)
-        P.savefig('./out/test_cal_sim.png')
-        P.figure(2)
-        P.imshow(self.cal_star_stamp_compare)
-        P.savefig('./out/test_cal_data'+str(self.objid)+'.png')
-        print 'saved images'
-        raw_input()
+        #P.figure(1)
+        #P.imshow(self.cal_simulated_image)
+        #P.savefig('./out/test_cal_sim.png')
+        #P.figure(2)
+        #P.imshow(self.cal_star_stamp_compare)
+        #P.savefig('./out/test_cal_data'+str(self.objid)+'.png')
+        #print 'saved images'
+        #raw_input()
 
     def compare_sim_and_real_cal_stars(self):
         sim = self.cal_simulated_image.ravel()
@@ -618,15 +619,22 @@ class GalsimKernel:
        multiply image x10^(-.4(zpti - zpt0))
     '''
     def get_multiplicative_factor( self, zero_point ):
-        mult = 10**(-.4*(zero_point-self.nominal_zpt))
+        mult = 10**(-.4*(self.nominal_zpt-zero_point))
         return mult
 
     '''
        Get images on same zero point
     '''
     def get_real_images_on_same_zpt(self):
+        print 'Getting real images on same zero point'
         for epoch in np.arange(len(self.galpos_ras)):
+            print 'Epoch '+str(epoch)
+            print self.image_zero_points[epoch]
+            print self.get_multiplicative_factor(self.image_zero_points[epoch])
+            print self.real_data_stamps_ravel[epoch]
             self.real_data_stamps_ravel[epoch] = self.real_data_stamps_ravel[epoch]*self.get_multiplicative_factor(self.image_zero_points[epoch])
+            print self.real_data_stamps_ravel[epoch]
+            raw_input()
         return
 
     """
