@@ -366,7 +366,7 @@ class GalsimKernel:
             self.star_mags.append([])
             index = -1
 
-            for cal_star in ['395238']:
+            for cal_star in ['395371']:
             #for cal_star in star_dict['OBJID']:
                 self.cal_star_chisq_history = [999999.9]
                 self.this_cal_star_chisq = 999999.9
@@ -466,7 +466,10 @@ class GalsimKernel:
         print b>10
         print ((a>22.0) & (b>10.0))
         print len(((a>22.0) & (b>10.0)))
-        print a[((a>22.0) & (b>10.0))]
+        print a[((a<21.3) & (b<9.0))]
+        P.scatter(b,a)
+        out = os.path.join(self.outdir,'zero_point_test.png')
+        P.savefig(out)
         print self.real_img_files[1]
         print 'stop'
         raw_input()
