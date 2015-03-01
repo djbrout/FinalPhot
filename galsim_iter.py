@@ -294,6 +294,7 @@ class GalsimKernel:
         zptfile = os.path.join(self.outdir,'zero_points.npz')
         continu = self.check_if_all_zero_points_already_exist(zptfile)
         print 'checking'
+        continu = False
         if not continu:
             print 'Are you sure you want to continue? you may be overwriting zeropoint infomration if the npz file has not changed....'
             raw_input()
@@ -365,7 +366,8 @@ class GalsimKernel:
             self.star_mags.append([])
             index = -1
 
-            for cal_star in star_dict['OBJID']:
+            for cal_star in ['395238']:
+            #for cal_star in star_dict['OBJID']:
                 self.cal_star_chisq_history = [999999.9]
                 self.this_cal_star_chisq = 999999.9
                 self.star_counts_histories[epoch][cal_star] = []
@@ -456,8 +458,16 @@ class GalsimKernel:
 
     def what_are_the_zpt_outliers( self ):
         print self.image_zero_points
-        print 2.5*np.log10(self.mean_star_counts)
-        print self.star_mags
+        print str(2.5*np.log10(self.mean_star_counts[1]))
+        print self.star_mags[1]
+        a = np.array(self.star_mags[1])
+        b = np.array(2.5*np.log10(self.mean_star_counts[1]))
+        print a>22
+        print b>10
+        print ((a>22.0) & (b>10.0))
+        print len(((a>22.0) & (b>10.0)))
+        print a[((a>22.0) & (b>10.0))]
+        print self.real_img_files[1]
         print 'stop'
         raw_input()
 
@@ -549,13 +559,14 @@ class GalsimKernel:
         self.cal_simulated_image = self.cal_sim_img[ self.trim_edges:-self.trim_edges
                                                     , self.trim_edges:-self.trim_edges
                                                 ]
-        #P.figure(1)
-        #P.imshow(self.cal_simulated_image)
-        #P.savefig('./out/test_cal_sim.png')
-        #P.figure(2)
-        #P.imshow(self.cal_star_stamp_compare)
-        #P.savefig('./out/test_cal_data.png')
-        #print 'saved images'
+        P.figure(1)
+        P.imshow(self.cal_simulated_image)
+        P.savefig('./out/test_cal_sim.png')
+        P.figure(2)
+        P.imshow(self.cal_star_stamp_compare)
+        P.savefig('./out/test_cal_data.png')
+        print 'saved images'
+        raw_input()
 
     def compare_sim_and_real_cal_stars(self):
         sim = self.cal_simulated_image.ravel()
