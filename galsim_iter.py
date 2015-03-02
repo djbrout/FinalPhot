@@ -73,7 +73,8 @@ class GalsimKernel:
                  , background_mesh_median_filter_size = 3 # A value of one means no filter is applied
                  , write_to_file_img_num = 0
                  , SN_counts_guesses = None
-                 , noiminal_zero_point = 31.6 #from starcals
+                 , noiminal_zero_point = 32.0 #from starcals
+                 , sn_stdev = 10
                  ):
 
         if real_images is None:
@@ -117,6 +118,7 @@ class GalsimKernel:
             \n\treal_images\n\tweights_files\n\tpsf_files\n\tgalpso_ras\n\tgalpos_decs\n\twhich_filters\n\texposure_nums\n\tccd_nums')
 
         self.run_time = run_time
+        self.model_img_index = model_img_index
         self.exposure_nums = np.array(exposure_nums)
         self.ccd_nums = np.array(ccd_nums)
         self.which_filters = np.array(which_filters,dtype='string')
@@ -141,6 +143,7 @@ class GalsimKernel:
         self.galpos_backgrounds = np.zeros( len( galpos_ras ) )
         self.stamp_RA = float( stamp_RA )
         self.stamp_DEC = float( stamp_DEC )
+        self.sn_stdev = sn_stdev
 
         self.satisfactory = satisfactory
         self.trim_edges = trim_edges
@@ -256,7 +259,7 @@ class GalsimKernel:
 
 
         # SET THE MODEL TO THE REAL DATA SPECIFIED BY THE INDEX GIVEN
-        self.model = self.real_data_stamps[model_img_index].array - self.galpos_backgrounds[0]
+        self.model = self.real_data_stamps[self.model_img_index].array - self.galpos_backgrounds[0]
         self.model = np.ascontiguousarray(np.flipud(np.fliplr(self.model.T)))
 
         self.real_data_stamps_pixelated = []
@@ -292,26 +295,30 @@ class GalsimKernel:
 
         #add option here to load zeropoints instead of calclate
         zptfile = os.path.join(self.outdir,'zero_points.npz')
-        continu = self.check_if_all_zero_points_already_exist(zptfile)
-        print 'checking'
-        #continu = False
-        if not continu:
-            print 'Are you sure you want to continue? you may be overwriting zeropoint infomration if the npz file has not changed....'
-            raw_input()
-            self.get_zeropoint_multiplicative_factor()
+        #continu = self.check_if_all_zero_points_already_exist(zptfile)
+        #print 'checking'
+        ##continu = False
+        #if not continu:
+        #    print 'Are you sure you want to continue? you may be overwriting zeropoint infomration if the npz file has not changed....'
+        #    raw_input()
+        #    self.get_zeropoint_multiplicative_factor()
         #raw_input()
-        print 'Done with zeropoints'
+        #print 'Done with zeropoints'
         #self.what_are_the_zpt_outliers()
         
         #  NOT WORKING!!!!!!
-        self.get_real_images_on_same_zpt()
+        #print self.real_img_files[0]
+        #self.fit_image_zero_point( self.mean_star_counts[0], self.star_mags[0])
+        #print self.real_img_files[1]
+        #self.fit_image_zero_point( self.mean_star_counts[1], self.star_mags[1])
+        #self.get_real_images_on_same_zpt()
 
 
-        for epoch in np.arange(len(self.galpos_ras)):
-            real_data_filename = 'test_data_expo'+str(int(self.exposure_nums[epoch]))+'_out_zeropointed.fits'
-            real_data_file_out = os.path.join( self.outdir, real_data_filename )
-            os.system('rm '+real_data_file_out)
-            pf.writeto(real_data_file_out, self.real_data_stamps_trimmed[epoch])
+        #for epoch in np.arange(len(self.galpos_ras)):
+        #    real_data_filename = 'test_data_expo'+str(int(self.exposure_nums[epoch]))+'_out_zeropointed.fits'
+        #    real_data_file_out = os.path.join( self.outdir, real_data_filename )
+        #    os.system('rm '+real_data_file_out)
+        #    pf.writeto(real_data_file_out, self.real_data_stamps_trimmed[epoch])
         
         #real_data_filename_beforepix = 'test_data_out_before_pix.fits'
         #real_data_file_out_beforepix = os.path.join( self.outdir, real_data_filename_beforepix )
@@ -339,7 +346,7 @@ class GalsimKernel:
         self.chisq = []
         self.chisq.append(9999)
         self.model_pixels = []
-        [ self.model_pixels.append([]) for i in np.nditer(self.real_data_stamps_ravel[model_img_index])]
+        [ self.model_pixels.append([]) for i in np.nditer(self.real_data_stamps_ravel[self.model_img_index])]
 
         self.pixel_history = []
         self.sn_flux_history = []
@@ -542,7 +549,7 @@ class GalsimKernel:
         #print 'model created'
         return
 
-    def adjust_cal_star_model( self, stdev = 100):        
+    def adjust_cal_star_model( self , stdev = 10): 
         self.kicked_cal_flux = self.cal_flux
         self.kicked_cal_flux += np.random.normal( scale = stdev )
         #print 'kicked flux: ' +str(self.kicked_cal_flux)
@@ -588,14 +595,13 @@ class GalsimKernel:
         return 
 
     '''
-       Force slope to be 2.5 on fit of m vs logC. fit for zpt
+       Force slope to be -1 on fit of m vs 2.5logC. fit for zpt
     '''
     def fit_image_zero_point(self, star_counts, star_mags):
         #slope = -2.5
-        zpts = []
-        chisqs = []
+
         P.scatter(2.5*np.log10(star_counts),star_mags)
-        slope, zero_point, r_value, p_value, std_err = stats.linregress(float(2.5)*np.log10(star_counts),star_mags)
+        #slope, zero_point, r_value, p_value, std_err = stats.linregress(float(2.5)*np.log10(star_counts),star_mags)
 
         out = os.path.join(self.outdir,'zero_point_one_image.png')
         P.xlabel('2.5*log10(counts)')
@@ -607,11 +613,24 @@ class GalsimKernel:
         P.xlabel('2.5*log10(counts)')
         P.ylabel('cal star mag')
 
-        P.plot(np.arange(0.,100.,1.),slope*np.arange(0.,100.,1.)+zero_point)
+
+        zpts = []
+        chisqs = []
+        for zpt in np.arange(20,40,.001):
+            zpts.append(zpt)
+            expected_mags = -2.5*np.log10(star_counts) + zpt
+            #print expected_mags
+            #print star_mags
+            #raw_input()
+            chisqs.append( stats.chisquare(star_mags,f_exp=expected_mags)[0] )
+        zpts = np.array(zpts)
+        chisqs = np.array(chisqs)
+        zero_point = zpts[np.argmin(chisqs)]
+
+        P.plot(np.arange(0.,100.,1.),-1*np.arange(0.,100.,1.)+zero_point)
         out = os.path.join(self.outdir,'zero_point_one_image_Secnd.png')
         P.savefig(out)
         print 'zpt: '+str(zero_point)
-        #raw_input()
         return zero_point
 
 
@@ -619,7 +638,9 @@ class GalsimKernel:
        multiply image x10^(-.4(zpti - zpt0))
     '''
     def get_multiplicative_factor( self, zero_point ):
+        #mult = 10**(-.4*(zero_point-self.nominal_zpt))
         mult = 10**(-.4*(self.nominal_zpt-zero_point))
+        
         return mult
 
     '''
@@ -633,8 +654,12 @@ class GalsimKernel:
             print self.get_multiplicative_factor(self.image_zero_points[epoch])
             print self.real_data_stamps_ravel[epoch]
             self.real_data_stamps_ravel[epoch] = self.real_data_stamps_ravel[epoch]*self.get_multiplicative_factor(self.image_zero_points[epoch])
+            if epoch == self.model_img_index:
+                self.model = self.model * self.get_multiplicative_factor(self.image_zero_points[epoch])
             print self.real_data_stamps_ravel[epoch]
-            #raw_input()
+            print self.galpos_backgrounds[epoch]
+            print self.real_data_stamps_ravel[epoch] - self.galpos_backgrounds[epoch]
+            raw_input()
         return
 
     """
@@ -802,7 +827,9 @@ class GalsimKernel:
     """
     Adjusting the guess for the location and flux of the supernova
     """
-    def adjust_sn( self, stdev = 10):        
+    def adjust_sn( self): 
+        stdev = self.sn_stdev       
+       
         self.kicked_sns = self.sns
         self.kicked_SN_fluxes = self.SN_fluxes
         for epoch in np.arange(len(self.sns)):
@@ -1133,8 +1160,8 @@ if __name__=='__main__':
     #image_nums = [0,17,21,26]
     #SN_counts_guesses = [0,1,1,1]
 
-    image_nums = [0]
-    SN_counts_guesses = [0]
+    image_nums = [0,1]
+    SN_counts_guesses = [0,2000]
 
     real_images, weights_files, psf_files, star_dicts, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
 
@@ -1150,9 +1177,10 @@ if __name__=='__main__':
                         , galpos_ras = galpos_ras
                         , galpos_decs = galpos_decs
                         , results_tag = 'pix_1arcsec'
-                        , run_time = 60
+                        , run_time = 100
                         , write_to_file_img_num = 2
                         , SN_counts_guesses = SN_counts_guesses
+                        , sn_stdev = 15
                         )
     
     test.run()
