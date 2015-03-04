@@ -940,7 +940,7 @@ class GalsimKernel:
         P.savefig(out)
         P.figure(5)
         P.plot(np.arange(0,len(sn_flux_history[1])),sn_flux_history[1])
-        #P.plot(np.arange(0,len(sn_flux_history[1])),sn_flux_history[1])
+        P.plot(np.arange(0,len(sn_flux_history[2])),sn_flux_history[2])
         #P.plot(np.arange(0,len(sn_flux_history[2])),sn_flux_history[2])
         #P.plot(np.arange(0,len(sn_flux_history[3])),sn_flux_history[3])
         out = os.path.join(self.outdir,'sn_counts_history.png')
