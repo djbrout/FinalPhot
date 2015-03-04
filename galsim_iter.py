@@ -1187,7 +1187,7 @@ if __name__=='__main__':
                         , galpos_ras = galpos_ras
                         , galpos_decs = galpos_decs
                         , results_tag = 'pix_1arcsec'
-                        , run_time = 100
+                        , run_time = 200
                         , write_to_file_img_num = 2
                         , SN_counts_guesses = SN_counts_guesses
                         , sn_stdev = 15
