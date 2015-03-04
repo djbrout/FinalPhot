@@ -22,6 +22,7 @@ import time
 import math
 import rdcol
 from scipy.ndimage.interpolation import zoom
+import copy
 from scipy.ndimage.filters import median_filter
 
 import matplotlib
@@ -721,6 +722,7 @@ class GalsimKernel:
 
     def mcmc(self, isCalStar = False):
         
+        #print self.SN_fluxes[1]
         self.adjust_model() 
         self.adjust_sn()
         self.kernel()
@@ -731,7 +733,7 @@ class GalsimKernel:
 
 
         if accept_bool:
-            #print 'accepted'
+            print 'accepted'
             self.accepted_history = ( self.accepted_history * self.accepted_int + 1.0 ) / ( self.accepted_int + 1 )
             self.copy_adjusted_image_to_model()
             self.update_history()
@@ -739,7 +741,8 @@ class GalsimKernel:
         else:
             self.accepted_history = ( self.accepted_history * self.accepted_int ) / ( self.accepted_int + 1 )
             self.update_unaccepted_history()
-
+        #print self.SN_fluxes[1]
+        #raw_input()
     def accept(self,chisq_history,this_chisq):
         alpha = np.exp( chisq_history[-1] - this_chisq ) / 2.0
         return_bool = False
@@ -751,13 +754,13 @@ class GalsimKernel:
         return return_bool
 
     def copy_adjusted_cal_model(self):
-        self.cal_star = self.kicked_cal_star
-        self.cal_flux = self.kicked_cal_flux
+        self.cal_star = copy.copy(self.kicked_cal_star)
+        self.cal_flux = copy.copy(self.kicked_cal_flux)
 
     def copy_adjusted_image_to_model(self):
-        self.model = self.kicked_model
-        self.sns = self.kicked_sns
-        self.SN_fluxes = self.kicked_SN_fluxes
+        self.model = copy.copy(self.kicked_model)
+        self.sns = copy.copy(self.kicked_sns)
+        self.SN_fluxes = copy.copy(self.kicked_SN_fluxes)
         return
 
     def update_cal_star_history(self, epoch, objid):
@@ -800,7 +803,7 @@ class GalsimKernel:
         for epoch in np.arange(len(self.DES_PSFEx_files)):
 
             # Combine galaxy model and supernova
-            self.total_gal = self.gal_model + self.sns[epoch]
+            self.total_gal = self.gal_model + self.kicked_sns[epoch]
                     
 
             # Convolve galaxy+sn model with psf
@@ -830,11 +833,12 @@ class GalsimKernel:
     def adjust_sn( self): 
         stdev = self.sn_stdev       
        
-        self.kicked_sns = self.sns
-        self.kicked_SN_fluxes = self.SN_fluxes
+        self.kicked_sns = copy.copy(self.sns)
+        self.kicked_SN_fluxes = copy.copy(self.SN_fluxes)
         for epoch in np.arange(len(self.sns)):
             if self.kicked_SN_fluxes[epoch] != 0:
                 self.kicked_SN_fluxes[epoch] += np.random.normal(scale = stdev )
+                print self.kicked_SN_fluxes[epoch]
             #self.SN_RA_guess += ra_adj
             #self.SN_DEC_guess += dec_adj
             self.kicked_sns[epoch] = galsim.Gaussian( sigma = 1.e-8, flux = self.kicked_SN_fluxes[epoch] )
@@ -935,7 +939,7 @@ class GalsimKernel:
         out = os.path.join(self.outdir,'pixel_history.png')
         P.savefig(out)
         P.figure(5)
-        P.plot(np.arange(0,len(sn_flux_history[0])),sn_flux_history[0])
+        P.plot(np.arange(0,len(sn_flux_history[1])),sn_flux_history[1])
         #P.plot(np.arange(0,len(sn_flux_history[1])),sn_flux_history[1])
         #P.plot(np.arange(0,len(sn_flux_history[2])),sn_flux_history[2])
         #P.plot(np.arange(0,len(sn_flux_history[3])),sn_flux_history[3])
@@ -1160,8 +1164,8 @@ if __name__=='__main__':
     #image_nums = [0,17,21,26]
     #SN_counts_guesses = [0,1,1,1]
 
-    image_nums = [0]
-    SN_counts_guesses = [0]
+    image_nums = [0,1,17,21,26]
+    SN_counts_guesses = [0,8000,6000,6000,6000]
 
     real_images, weights_files, psf_files, star_dicts, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
 
@@ -1185,8 +1189,7 @@ if __name__=='__main__':
     
     test.run()
     test.plot_pixel_histograms()
-    #save zeropoints
-    #Check backgrounds
+    #Check backgrounds by zooming out
 
     # CREATE MODEL OBJECT AND GIVE IT METHODS ON HOW TO ADJUST THE MODEL
     # ADD THE OPTION TO FEED IN GALAXY POSITIONS IN DEGRES! AND OTHER UNITS
