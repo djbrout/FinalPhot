@@ -54,6 +54,8 @@ class GalsimKernel:
                  , which_filters = None
                  , galpos_ras = None
                  , galpos_decs = None
+                 , sn_pos_ras = None
+                 , sn_pos_decs = None
                  , SN_RA_guess = None # arcsec from center of entire image (not stamp)
                  , SN_DEC_guess = None # arsec from center of entire image (not stamp)
                  , satisfactory = 39 # process is iterated until chisq reaches this value
@@ -90,6 +92,7 @@ class GalsimKernel:
             raise AttributeError('Must provide galpos_ras in __init__')
         if galpos_decs is None:
             raise AttributeError('Must provide galpos_decs in __init__')
+        #Need to do this for sn pos ras and decs!
         if psf_files is None:
             raise AttributeError('Must provide psf_files in __init__')
         if weights_files is None:
@@ -131,6 +134,8 @@ class GalsimKernel:
         self.SN_fluxes = SN_counts_guesses
         self.SN_RA_guesses = np.zeros(len(real_images))#initialize to zero
         self.SN_DEC_guesses = np.zeros(len(real_images))#initialize to zero
+        self.sn_pos_ras = sn_pos_ras
+        self.sn_pos_decs = sn_pos_decs
 
         self.star_stamp_RA = star_stamp_RA
         self.star_stamp_DEC = star_stamp_DEC
@@ -207,17 +212,19 @@ class GalsimKernel:
         self.coarse_factor = self.pixel_scale/coarse_pixel_scale
         #self.pixel_scale = 0.2634
         
+        #get wcs information from real data file (this doesnt change as model changes)                                                
+        self.wcss = []
+        [ self.wcss.append(galsim.FitsWCS( real_img_file )) for real_img_file in self.real_img_files ]
 
         # Create supernova point source (ie. very very small gaussian)
         self.sns = []
         [ self.sns.append(galsim.Gaussian( sigma = 1.e-8, flux = SN_flux )) for SN_flux in self.SN_fluxes]
 
+        #deal with supernova shift
+        self.sn_image_pos = galsim.PositionD( self.sn_pos_ras[model_img_index][0], self.sn_pos_decs[model_img_index][0] )
+
         # Shift SNs relative to galaxy center
-        [ self.sns[i].shift(galsim.PositionD( self.galpos_ras[i][0], self.galpos_decs[i][0] )) for i in np.arange(len(self.galpos_ras))]
-        
-        #get wcs information from real data file (this doesnt change as model changes)                                                
-        self.wcss = []
-        [ self.wcss.append(galsim.FitsWCS( real_img_file )) for real_img_file in self.real_img_files ]
+        [ self.sns[i].shift(self.sn_image_pos) for i in np.arange(len(self.galpos_ras))]
 
         # Get psf over the entire ccd
         self.psf_models = []
@@ -298,10 +305,10 @@ class GalsimKernel:
         zptfile = os.path.join(self.outdir,'zero_points.npz')
         continu = self.check_if_all_zero_points_already_exist(zptfile)
         print 'checking'
-        ##continu = False
+        #continu = False
         if not continu:
             print 'Are you sure you want to continue? you may be overwriting zeropoint infomration if the npz file has not changed....'
-            raw_input()
+            #raw_input()
             self.get_zeropoint_multiplicative_factor()
         #raw_input()
         print 'Done with zeropoints'
@@ -313,6 +320,10 @@ class GalsimKernel:
         #print self.real_img_files[1]
         #self.fit_image_zero_point( self.mean_star_counts[1], self.star_mags[1])
         self.get_real_images_on_same_zpt()
+
+
+
+
 
 
         #for epoch in np.arange(len(self.galpos_ras)):
@@ -407,7 +418,8 @@ class GalsimKernel:
                     #and RUN MCMC
                     num_iter = 0
                     #if dojust:
-                    while num_iter < 2000:
+                    while num_iter < 3000:
+                        #print num_iter
                         num_iter += 1
                         #print 'last chisq: '+str(self.cal_star_chisq_history[-1])
                         self.star_mcmc(epoch,cal_star)
@@ -433,9 +445,14 @@ class GalsimKernel:
                     print 'std counts: '+str(np.std(self.star_counts_histories[epoch][cal_star][200:]))
                     print 'Calc mag: '+str(-2.5*np.log10(np.mean(self.star_counts_histories[epoch][cal_star][200:]))+32.0)
                     print 'calc mag std: '+str(-2.5*np.log10(np.std(self.star_counts_histories[epoch][cal_star][200:])))
-                    raw_input()
+                    #raw_input()
                     '''
-                    self.mean_star_counts[epoch].append(np.mean(self.star_counts_histories[epoch][cal_star][1400:]))
+                    #print np.mean(self.star_counts_histories[epoch][cal_star][2000:])
+                    #print np.std(self.star_counts_histories[epoch][cal_star][1400:])
+                    #raw_input()
+                    #if np.mean(self.star_counts_histories[epoch][cal_star][1400:]) 
+                    self.mean_star_counts[epoch].append(np.mean(self.star_counts_histories[epoch][cal_star][2000:]))
+                    
                     self.star_mags[epoch].append(cal_star_mag)
 
                 #NEED TO TURN STAR COUNT HISTORIES INTO A MEAN VALUE!
@@ -454,14 +471,18 @@ class GalsimKernel:
         data = np.load(zpt_file)
         yesno = True
         index = -1
-        for fle in self.real_img_files:
-            index += 1
-            if fle == data['image_file_names'][index]:
-                print 'good'
-                pass
-            else:
-                print 'bad'
-                yesno = False
+        try:
+            for fle in self.real_img_files:
+                index += 1
+                if fle == data['image_file_names'][index]:
+                    print 'good'
+                    pass
+                else:
+                    print 'bad'
+                    yesno = False
+
+        except IndexError:
+            yesno = False
 
         if yesno:
             self.image_zero_points = data['image_zero_points']
@@ -488,7 +509,7 @@ class GalsimKernel:
         P.savefig(out)
         print self.real_img_files[1]
         print 'stop'
-        raw_input()
+        #raw_input()
 
 
 
@@ -665,7 +686,7 @@ class GalsimKernel:
             print self.real_data_stamps_ravel[epoch]
             print self.galpos_backgrounds[epoch]
             print self.real_data_stamps_ravel[epoch] - self.galpos_backgrounds[epoch]
-            raw_input()
+            #raw_input()
         return
 
     """
@@ -836,6 +857,7 @@ class GalsimKernel:
     Adjusting the guess for the location and flux of the supernova
     """
     def adjust_sn( self): 
+
         stdev = self.sn_stdev       
        
         self.kicked_sns = copy.copy(self.sns)
@@ -847,7 +869,7 @@ class GalsimKernel:
             #self.SN_RA_guess += ra_adj
             #self.SN_DEC_guess += dec_adj
             self.kicked_sns[epoch] = galsim.Gaussian( sigma = 1.e-8, flux = self.kicked_SN_fluxes[epoch] )
-            self.kicked_sns[epoch].shift(galsim.PositionD( self.galpos_ras[epoch][0], self.galpos_decs[epoch][0] ))
+            self.kicked_sns[epoch].shift(self.sn_image_pos)
 
     """
     Adjusting the galaxy model pixel values. Completely empirical!
@@ -945,9 +967,18 @@ class GalsimKernel:
         P.savefig(out)
         P.figure(5)
         P.plot(np.arange(0,len(sn_flux_history[1])),sn_flux_history[1])
-        #P.plot(np.arange(0,len(sn_flux_history[2])),sn_flux_history[2])
-        #P.plot(np.arange(0,len(sn_flux_history[2])),sn_flux_history[2])
-        #P.plot(np.arange(0,len(sn_flux_history[3])),sn_flux_history[3])
+        P.plot(np.arange(0,len(sn_flux_history[2])),sn_flux_history[2])
+        P.plot(np.arange(0,len(sn_flux_history[4])),sn_flux_history[4])
+        P.plot(np.arange(0,len(sn_flux_history[3])),sn_flux_history[3])
+        P.plot(np.arange(0,len(sn_flux_history[5])),sn_flux_history[5])
+        P.plot(np.arange(0,len(sn_flux_history[6])),sn_flux_history[6])
+        P.plot(np.arange(0,len(sn_flux_history[7])),sn_flux_history[7])
+        P.plot(np.arange(0,len(sn_flux_history[8])),sn_flux_history[8])
+        P.plot(np.arange(0,len(sn_flux_history[9])),sn_flux_history[9])
+        P.plot(np.arange(0,len(sn_flux_history[10])),sn_flux_history[10])
+
+
+
         out = os.path.join(self.outdir,'sn_counts_history.png')
         P.savefig(out)
         P.figure(2)
@@ -1056,13 +1087,22 @@ def read_query( file, image_dir, image_nums):
     ccds = np.array( query['Field-CCD'], dtype= 'string' )
     filts = np.array( query['Filter'], dtype= 'string' )
 
+    #for i in np.arange(len(filts)):
+    #    if filts[i] == 'g':
+    #        print i
+    #raw_input()
+
     image_paths = []
     exposures_ = []
     query_ra_pix = np.array( query['x'] )
     query_dec_pix = np.array( query['y'] )
+    query_sn_ra = np.array( query['RA'] )
+    query_sn_dec = np.array( query['Dec'] )
 
     ra_pix = []
     dec_pix = []
+    sn_ra = []
+    sn_dec = []
     filter_out = []
     exposure_nums_out = []
     ccd_nums_out = []
@@ -1081,6 +1121,8 @@ def read_query( file, image_dir, image_nums):
                 
                 ra_pix.append( query_ra_pix[ (exposures == exposure) & (ccds == ccd) ] )
                 dec_pix.append( query_dec_pix[ (exposures == exposure) & (ccds == ccd) ] )
+                sn_ra.append(query_sn_ra[ (exposures == exposure) & (ccds == ccd) ])
+                sn_dec.append(query_sn_dec[ (exposures == exposure) & (ccds == ccd) ])
                 filter_out.append( filts[ (exposures == exposure) & (ccds == ccd) ] )
                 exposure_nums_out.append(exposure)
                 ccd_nums_out.append(ccd)
@@ -1112,11 +1154,15 @@ def read_query( file, image_dir, image_nums):
 
     galpos_ras = []
     galpos_decs = []
+    sn_pos_ras = []
+    sn_pos_decs = []
     [ galpos_ras.append(ra_pix[i]) for i in image_nums] #in pixels
     [ galpos_decs.append(dec_pix[i]) for i in image_nums]
+    [ sn_pos_ras.append(sn_ra[i]) for i in image_nums]
+    [ sn_pos_decs.append(sn_dec[i]) for i in image_nums]
     [ filters.append(filter_out[i]) for i in image_nums]
 
-    return real_images, weights_files, psf_files, star_dicts, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums
+    return real_images, weights_files, psf_files, star_dicts, filters, galpos_ras, galpos_decs, sn_pos_ras, sn_pos_decs, exposure_nums, ccd_nums
 
 def read_stars( file ):
     star_dict = rdcol.read( file.replace(' ','') , 4, 5, ' ')
@@ -1166,14 +1212,16 @@ if __name__=='__main__':
     #image_nums = [0,1,9,13]
     #SN_counts_guesses = [0,1000,1000,1000]
 
-    image_nums = [0,1]
-    SN_counts_guesses = [0,8000]
+    #image_nums = [0,1]
+    #SN_counts_guesses = [0,8000]
 
-    #image_nums = [0,1,17,21,26]
-    #SN_counts_guesses = [0,8000,6000,6000,6000]
+    image_nums = [0,1,5,9,13,17,21,26,30,33,43]
+    SN_counts_guesses = [0,8000,6000,6000,6000,6000,6000,6000,6000,6000,6000]
 
 
-    real_images, weights_files, psf_files, star_dicts, filters, galpos_ras, galpos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
+    real_images, weights_files, psf_files, star_dicts, filters, galpos_ras, galpos_decs, sn_pos_ras, sn_pos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
+
+        
 
     # Initial guess for model is real img without SN
     test = GalsimKernel( real_images = real_images
@@ -1186,14 +1234,16 @@ if __name__=='__main__':
                         , outdir = outdir 
                         , galpos_ras = galpos_ras
                         , galpos_decs = galpos_decs
+                        , sn_pos_ras = sn_pos_ras
+                        , sn_pos_decs = sn_pos_decs
                         , results_tag = 'pix_1arcsec'
-                        , run_time = 200
+                        , run_time = 1000
                         , write_to_file_img_num = 2
                         , SN_counts_guesses = SN_counts_guesses
                         , sn_stdev = 15
                         )
     
-    test.run()
+    #test.run()
     test.plot_pixel_histograms()
     #Check backgrounds by zooming out
 
