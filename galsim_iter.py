@@ -1237,13 +1237,13 @@ if __name__=='__main__':
                         , sn_pos_ras = sn_pos_ras
                         , sn_pos_decs = sn_pos_decs
                         , results_tag = 'pix_1arcsec'
-                        , run_time = 1000
+                        , run_time = 3600
                         , write_to_file_img_num = 2
                         , SN_counts_guesses = SN_counts_guesses
                         , sn_stdev = 15
                         )
     
-    #test.run()
+    test.run()
     test.plot_pixel_histograms()
     #Check backgrounds by zooming out
 
