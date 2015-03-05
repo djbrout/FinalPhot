@@ -997,6 +997,8 @@ class GalsimKernel:
 
         P.figure(7)
         P.scatter(mjds,sn_mags)
+        ax = P.gca()
+        ax.set_ylim(ax.get_ylim()[::-1])
         P.xlabel('MJD')
         P.ylabel('g band Mag')
         out = os.path.join(self.outdir,'g_band_light_curve.png')
