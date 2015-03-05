@@ -78,6 +78,7 @@ class GalsimKernel:
                  , SN_counts_guesses = None
                  , noiminal_zero_point = 32.0 #from starcals
                  , sn_stdev = 10
+                 , mjds = None
                  ):
 
         if real_images is None:
@@ -92,7 +93,7 @@ class GalsimKernel:
             raise AttributeError('Must provide galpos_ras in __init__')
         if galpos_decs is None:
             raise AttributeError('Must provide galpos_decs in __init__')
-        #Need to do this for sn pos ras and decs!
+        #Need to do this for sn pos ras and decs! and mjds
         if psf_files is None:
             raise AttributeError('Must provide psf_files in __init__')
         if weights_files is None:
@@ -976,11 +977,32 @@ class GalsimKernel:
         P.plot(np.arange(0,len(sn_flux_history[8])),sn_flux_history[8])
         P.plot(np.arange(0,len(sn_flux_history[9])),sn_flux_history[9])
         P.plot(np.arange(0,len(sn_flux_history[10])),sn_flux_history[10])
-
-
-
+        P.xlabel('iter')
+        P.ylabel('Counts')
         out = os.path.join(self.outdir,'sn_counts_history.png')
         P.savefig(out)
+
+        P.figure(6)
+        for i in np.arange(len(self.galpos_ras)):
+            P.plot(np.arange(0,len(sn_flux_history[i])),-2.5*np.log10(sn_flux_history[i])+self.image_zero_points[i])
+        out = os.path.join(self.outdir,'sn_mags_history.png')
+        P.xlabel('iter')
+        P.ylabel('Mag')
+        P.savefig(out)
+
+        sn_fluxes = []
+        for i in np.arange(len(self.galpos_ras)):
+            sn_fluxes.append(np.mean(sn_flux_history[i][20000:25000]))
+        sn_mags = -2.5*np.log10(sn_fluxes)+self.image_zero_points
+
+        P.figure(7)
+        P.scatter(mjds,sn_mags)
+        P.xlabel('MJD')
+        P.ylabel('g band Mag')
+        out = os.path.join(self.outdir,'g_band_light_curve.png')
+        P.savefig(out)
+
+
         P.figure(2)
         n, bins, patches = P.hist(pixel1_vec_np[500:], 100, histtype='stepfilled',alpha=.3)
         P.text(150, 800, 'Hist Mean: '+str(np.mean(pixel1_vec_np[500:])) + '\n' +
@@ -1098,6 +1120,7 @@ def read_query( file, image_dir, image_nums):
     query_dec_pix = np.array( query['y'] )
     query_sn_ra = np.array( query['RA'] )
     query_sn_dec = np.array( query['Dec'] )
+    query_mjd = np.array( query['MJD'])
 
     ra_pix = []
     dec_pix = []
@@ -1107,6 +1130,7 @@ def read_query( file, image_dir, image_nums):
     exposure_nums_out = []
     ccd_nums_out = []
     other_num = []
+    mjd_out = []
 
     query_wheres = {}
 
@@ -1121,6 +1145,7 @@ def read_query( file, image_dir, image_nums):
                 
                 ra_pix.append( query_ra_pix[ (exposures == exposure) & (ccds == ccd) ] )
                 dec_pix.append( query_dec_pix[ (exposures == exposure) & (ccds == ccd) ] )
+                mjd_out.append(query_mjd[ (exposures == exposure) & (ccds == ccd) ] )
                 sn_ra.append(query_sn_ra[ (exposures == exposure) & (ccds == ccd) ])
                 sn_dec.append(query_sn_dec[ (exposures == exposure) & (ccds == ccd) ])
                 filter_out.append( filts[ (exposures == exposure) & (ccds == ccd) ] )
@@ -1140,6 +1165,7 @@ def read_query( file, image_dir, image_nums):
     star_files = []
     star_dicts = []
     other_nums = []
+    mjds = []
 
     #STARCAT_20130927_SN-E1_g_01.LIST
 
@@ -1161,8 +1187,9 @@ def read_query( file, image_dir, image_nums):
     [ sn_pos_ras.append(sn_ra[i]) for i in image_nums]
     [ sn_pos_decs.append(sn_dec[i]) for i in image_nums]
     [ filters.append(filter_out[i]) for i in image_nums]
+    [ mjds.append(mjd_out[i]) for i in image_nums]
 
-    return real_images, weights_files, psf_files, star_dicts, filters, galpos_ras, galpos_decs, sn_pos_ras, sn_pos_decs, exposure_nums, ccd_nums
+    return real_images, weights_files, psf_files, star_dicts, filters, galpos_ras, galpos_decs, sn_pos_ras, sn_pos_decs, exposure_nums, ccd_nums, mjds
 
 def read_stars( file ):
     star_dict = rdcol.read( file.replace(' ','') , 4, 5, ' ')
@@ -1219,7 +1246,7 @@ if __name__=='__main__':
     SN_counts_guesses = [0,8000,6000,6000,6000,6000,6000,6000,6000,6000,6000]
 
 
-    real_images, weights_files, psf_files, star_dicts, filters, galpos_ras, galpos_decs, sn_pos_ras, sn_pos_decs, exposure_nums, ccd_nums = read_query( query_file, image_dir, image_nums )
+    real_images, weights_files, psf_files, star_dicts, filters, galpos_ras, galpos_decs, sn_pos_ras, sn_pos_decs, exposure_nums, ccd_nums, mjds = read_query( query_file, image_dir, image_nums )
 
         
 
@@ -1241,9 +1268,10 @@ if __name__=='__main__':
                         , write_to_file_img_num = 2
                         , SN_counts_guesses = SN_counts_guesses
                         , sn_stdev = 15
+                        , mjds = mjds
                         )
     
-    test.run()
+    #test.run()
     test.plot_pixel_histograms()
     #Check backgrounds by zooming out
 
