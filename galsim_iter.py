@@ -1006,10 +1006,10 @@ class GalsimKernel:
 
         fileout = os.path.join(self.outdir,'light_curve.txt')
         f = open(fileout,'w')
-        f.write('File\tMJD\tCounts\tZero Point\tMag')
+        f.write('File\tMJD\tCounts\tZero Point\tMag\n')
 
         for i in np.arange(len(self.galpos_ras)):
-            f.write(str(self.real_img_files[i])+'\t'+str(mjds[i]) +'\t'+ str(sn_fluxes[i]) + '\t'+ str(self.image_zero_points[i]) + '\t' + str(sn_mags[i]))
+            f.write(str(self.real_img_files[i])+'\t'+str(mjds[i]) +'\t'+ str(sn_fluxes[i]) + '\t'+ str(self.image_zero_points[i]) + '\t' + str(sn_mags[i])+'\n')
         f.close()
 
         P.figure(2)
