@@ -306,7 +306,7 @@ class GalsimKernel:
         zptfile = os.path.join(self.outdir,'zero_points.npz')
         continu = self.check_if_all_zero_points_already_exist(zptfile)
         print 'checking'
-        #continu = False
+        continu = False
         if not continu:
             print 'Are you sure you want to continue? you may be overwriting zeropoint infomration if the npz file has not changed....'
             #raw_input()
@@ -419,7 +419,7 @@ class GalsimKernel:
                     #and RUN MCMC
                     num_iter = 0
                     #if dojust:
-                    while num_iter < 3000:
+                    while num_iter < 4000:
                         #print num_iter
                         num_iter += 1
                         #print 'last chisq: '+str(self.cal_star_chisq_history[-1])
@@ -452,7 +452,7 @@ class GalsimKernel:
                     #print np.std(self.star_counts_histories[epoch][cal_star][1400:])
                     #raw_input()
                     #if np.mean(self.star_counts_histories[epoch][cal_star][1400:]) 
-                    self.mean_star_counts[epoch].append(np.mean(self.star_counts_histories[epoch][cal_star][2000:]))
+                    self.mean_star_counts[epoch].append(np.mean(self.star_counts_histories[epoch][cal_star][3000:]))
                     
                     self.star_mags[epoch].append(cal_star_mag)
 
@@ -537,7 +537,7 @@ class GalsimKernel:
         print self.cal_dec_pix
 
 
-        self.cal_image_pos = galsim.PositionD( self.cal_ra_pix, self.cal_dec_pix )
+        self.cal_image_pos = galsim.PositionD( self.cal_ra_degrees, self.cal_dec_degrees )
 
         self.cal_star.shift( self.cal_image_pos )
 
@@ -1004,6 +1004,9 @@ class GalsimKernel:
         out = os.path.join(self.outdir,'g_band_light_curve.png')
         P.savefig(out)
 
+        print 'File\tMJD\tCounts\tZero Point\tMag'
+        for i in np.arange(len(self.galpos_ras)):
+            print str(self.real_img_files[i])+'\t'+str(mjds[i]) +'\t'+ str(sn_fluxes[i]) + '\t'+ str(self.image_zero_points[i]) + '\t' + str(sn_mags[i])
 
         P.figure(2)
         n, bins, patches = P.hist(pixel1_vec_np[500:], 100, histtype='stepfilled',alpha=.3)
@@ -1273,7 +1276,7 @@ if __name__=='__main__':
                         , mjds = mjds
                         )
     
-    #test.run()
+    test.run()
     test.plot_pixel_histograms()
     #Check backgrounds by zooming out
 
