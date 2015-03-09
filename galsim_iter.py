@@ -471,16 +471,20 @@ class GalsimKernel:
 
     def plot_zero_point_fits( self):
 
-
+        figure_index = 0
         index = -1
         for epoch in self.exposure_nums:
             index += 1
 
             for cal_star in self.star_counts_histories[index].keys():
+                figure_index += 1
+                P.figure(figure_index)
                 P.plot(np.arange(len(self.star_counts_histories[index][cal_star])),self.star_counts_histories[index][cal_star])
                 out = os.path.join(self.outdir,'calstars',str(cal_star)+'_mcmc.png')
                 P.savefig(out)
 
+            figure_index += 1
+            P.figure(figure_index)
             P.scatter(2.5*np.log10(self.mean_star_counts[index]),self.star_mags[index])
             P.plot(2.5*np.log10(self.mean_star_counts[index]),-1*2.5*np.log10(self.mean_star_counts[index])+self.image_zero_points[index])
             out = os.path.join(self.outdir,'zero_point_fits_exposure'+str(epoch)+'.png')
