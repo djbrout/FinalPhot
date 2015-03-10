@@ -1293,7 +1293,7 @@ if __name__=='__main__':
     #SN_counts_guesses = [0,8000]
 
     image_nums = [0,1,5,9,13,17,21,26,30,33,43]
-    SN_counts_guesses = [0,8000,6000,6000,6000,6000,6000,6000,6000,6000,6000]
+    SN_counts_guesses = [0,24716,33095,49314,45931,21743,10578,3119,2080,1110,278]
 
 
     real_images, weights_files, psf_files, star_dicts, filters, galpos_ras, galpos_decs, sn_pos_ras, sn_pos_decs, exposure_nums, ccd_nums, mjds = read_query( query_file, image_dir, image_nums )
@@ -1317,7 +1317,7 @@ if __name__=='__main__':
                         , run_time = 3600
                         , write_to_file_img_num = 2
                         , SN_counts_guesses = SN_counts_guesses
-                        , sn_stdev = 15
+                        , sn_stdev = 5
                         , mjds = mjds
                         )
     
