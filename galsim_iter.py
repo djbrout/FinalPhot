@@ -1002,6 +1002,15 @@ class GalsimKernel:
 
         P.figure(9)
         P.plot(self.autocorr(sn_flux_history[1]))
+        P.plot(self.autocorr(sn_flux_history[2]))
+        P.plot(self.autocorr(sn_flux_history[3]))
+        P.plot(self.autocorr(sn_flux_history[4]))
+        P.plot(self.autocorr(sn_flux_history[5]))
+        P.plot(self.autocorr(sn_flux_history[6]))
+        P.plot(self.autocorr(sn_flux_history[7]))
+        P.plot(self.autocorr(sn_flux_history[8]))
+        P.plot(self.autocorr(sn_flux_history[9]))
+        P.plot(self.autocorr(sn_flux_history[10]))
         out = os.path.join(self.outdir,'autocorr.png')
         P.savefig(out)
 
