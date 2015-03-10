@@ -1,12 +1,12 @@
 File	MJD	Counts	Zero Point	Mag
- /global/scratch2/sd/dbrout/SN_images/20131028_SN-E1/g_05/SNp1_247897_SN-E1_tile20_g_05.fits	[ 56594.]	0.0	30.936	inf
- /global/scratch2/sd/dbrout/SN_images/20131105_SN-E1/g_05/SNp1_251072_SN-E1_tile20_g_05.fits	[ 56602.]	24744.8654293	30.884	19.9002872592
- /global/scratch2/sd/dbrout/SN_images/20131109_SN-E1/g_05/SNp1_252516_SN-E1_tile20_g_05.fits	[ 56606.]	33104.8755392	30.937	19.6372701014
- /global/scratch2/sd/dbrout/SN_images/20131112_SN-E1/g_05/SNp1_253356_SN-E1_tile20_g_05.fits	[ 56609.]	49276.6325764	30.915	19.1833974457
- /global/scratch2/sd/dbrout/SN_images/20131118_SN-E1/g_05/SNp1_255882_SN-E1_tile20_g_05.fits	[ 56615.1]	46001.5536417	30.908	19.2510687509
- /global/scratch2/sd/dbrout/SN_images/20131201_SN-E1/g_05/SNp1_259306_SN-E1_tile20_g_05.fits	[ 56628.]	21763.0617087	30.921	20.0767000163
- /global/scratch2/sd/dbrout/SN_images/20131208_SN-E1/g_05/SNp1_261949_SN-E1_tile20_g_05.fits	[ 56635.1]	10565.8743093	30.928	20.8682363999
- /global/scratch2/sd/dbrout/SN_images/20131218_SN-E1/g_05/SNp1_266131_SN-E1_tile20_g_05.fits	[ 56645.1]	3109.02859592	30.963	22.2314382086
- /global/scratch2/sd/dbrout/SN_images/20131223_SN-E1/g_05/SNp1_267895_SN-E1_tile20_g_05.fits	[ 56650.]	2129.2764904	30.872	22.5514198525
- /global/scratch2/sd/dbrout/SN_images/20131230_SN-E1/g_05/SNp1_269878_SN-E1_tile20_g_05.fits	[ 56657.]	1161.1962419	30.913	23.250735946
- /global/scratch2/sd/dbrout/SN_images/20140124_SN-E1/g_05/SNp1_277599_SN-E1_tile20_g_05.fits	[ 56682.1]	295.127875814	30.878	24.70297442
+ /global/scratch2/sd/dbrout/SN_images/20131028_SN-E1/g_05/SNp1_247897_SN-E1_tile20_g_05.fits	[ 56594.]	0.0	30.698	inf
+ /global/scratch2/sd/dbrout/SN_images/20131105_SN-E1/g_05/SNp1_251072_SN-E1_tile20_g_05.fits	[ 56602.]	24744.8654293	30.675	19.6912872592
+ /global/scratch2/sd/dbrout/SN_images/20131109_SN-E1/g_05/SNp1_252516_SN-E1_tile20_g_05.fits	[ 56606.]	33104.8755392	30.5	19.2002701014
+ /global/scratch2/sd/dbrout/SN_images/20131112_SN-E1/g_05/SNp1_253356_SN-E1_tile20_g_05.fits	[ 56609.]	49276.6325764	30.613	18.8813974457
+ /global/scratch2/sd/dbrout/SN_images/20131118_SN-E1/g_05/SNp1_255882_SN-E1_tile20_g_05.fits	[ 56615.1]	46001.5536417	30.585	18.9280687509
+ /global/scratch2/sd/dbrout/SN_images/20131201_SN-E1/g_05/SNp1_259306_SN-E1_tile20_g_05.fits	[ 56628.]	21763.0617087	30.692	19.8477000163
+ /global/scratch2/sd/dbrout/SN_images/20131208_SN-E1/g_05/SNp1_261949_SN-E1_tile20_g_05.fits	[ 56635.1]	10565.8743093	30.69	20.6302363999
+ /global/scratch2/sd/dbrout/SN_images/20131218_SN-E1/g_05/SNp1_266131_SN-E1_tile20_g_05.fits	[ 56645.1]	3109.02859592	30.481	21.7494382086
+ /global/scratch2/sd/dbrout/SN_images/20131223_SN-E1/g_05/SNp1_267895_SN-E1_tile20_g_05.fits	[ 56650.]	2129.2764904	30.651	22.3304198525
+ /global/scratch2/sd/dbrout/SN_images/20131230_SN-E1/g_05/SNp1_269878_SN-E1_tile20_g_05.fits	[ 56657.]	1161.1962419	30.68	23.017735946
+ /global/scratch2/sd/dbrout/SN_images/20140124_SN-E1/g_05/SNp1_277599_SN-E1_tile20_g_05.fits	[ 56682.1]	295.127875814	30.559	24.38397442

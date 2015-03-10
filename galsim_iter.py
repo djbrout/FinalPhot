@@ -420,7 +420,7 @@ class GalsimKernel:
                     #and RUN MCMC
                     num_iter = 0
                     #if dojust:
-                    while num_iter < 2000:
+                    while num_iter < 3000:
                         #print num_iter
                         num_iter += 1
                         #print 'last chisq: '+str(self.cal_star_chisq_history[-1])
@@ -453,7 +453,7 @@ class GalsimKernel:
                     #print np.std(self.star_counts_histories[epoch][cal_star][1400:])
                     #raw_input()
                     #if np.mean(self.star_counts_histories[epoch][cal_star][1400:]) 
-                    self.mean_star_counts[epoch].append(np.mean(self.star_counts_histories[epoch][cal_star][1200:]))
+                    self.mean_star_counts[epoch].append(np.mean(self.star_counts_histories[epoch][cal_star][2000:]))
                     
                     self.star_mags[epoch].append(cal_star_mag)
 
@@ -590,7 +590,7 @@ class GalsimKernel:
         #print 'model created'
         return
 
-    def adjust_cal_star_model( self , stdev = 10): 
+    def adjust_cal_star_model( self , stdev = 25): 
         self.kicked_cal_flux = self.cal_flux
         self.kicked_cal_flux += np.random.normal( scale = stdev )
         #print 'kicked flux: ' +str(self.kicked_cal_flux)
@@ -1000,6 +1000,16 @@ class GalsimKernel:
         out = os.path.join(self.outdir,'sn_counts_history.png')
         P.savefig(out)
 
+        P.figure(9)
+        P.plot(self.autocorr(sn_flux_history[1]))
+        out = os.path.join(self.outdir,'autocorr.png')
+        P.savefig(out)
+
+        P.figure(10)
+        P.acorr(sn_flux_history[1])
+        out = os.path.join(self.outdir,'autocorr_pylab.png')
+        P.savefig(out)
+
         P.figure(6)
         for i in np.arange(len(self.galpos_ras)):
             P.plot(np.arange(0,len(sn_flux_history[i])),-2.5*np.log10(sn_flux_history[i])+self.image_zero_points[i])
@@ -1055,6 +1065,10 @@ class GalsimKernel:
         #P.show()
 
         return
+
+    def autocorr( self, x ):
+        result = np.correlate( x, x, mode='full' )
+        return result[ result.size / 2 : ]
 
 
     # Takes in full image, creates mesh, and following the sextractor.pdf
