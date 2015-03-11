@@ -1321,7 +1321,7 @@ if __name__=='__main__':
                         , mjds = mjds
                         )
     
-    #test.run()
+    test.run()
     test.plot_pixel_histograms()
     #Check backgrounds by zooming out
 
