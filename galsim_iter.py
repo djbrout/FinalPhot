@@ -12,8 +12,8 @@ print 'importing'
 import sys
 sys.path.append("/global/u1/d/dbrout/FinalPhot/lib/") 
 
-import galsim
-import galsim.des
+#import galsim
+#import galsim.des
 import numpy as np
 import pyfits as pf
 from scipy import stats
@@ -155,7 +155,7 @@ class GalsimKernel:
         self.satisfactory = satisfactory
         self.trim_edges = trim_edges
 
-        self.big_fft_params = galsim.GSParams( maximum_fft_size = 10240 )
+        #self.big_fft_params = galsim.GSParams( maximum_fft_size = 10240 )
 
         # setting up a dictionary for all the images and their relevant information
         # Unique identifier (exposure_num,ccd_num)
@@ -214,7 +214,7 @@ class GalsimKernel:
         #self.pixel_scale = 0.2634
         
         #get wcs information from real data file (this doesnt change as model changes)                                                
-        self.wcss = []
+        '''self.wcss = []
         [ self.wcss.append(galsim.FitsWCS( real_img_file )) for real_img_file in self.real_img_files ]
 
         # Create supernova point source (ie. very very small gaussian)
@@ -355,7 +355,7 @@ class GalsimKernel:
         self.model_file_out = os.path.join(self.outdir,self.model_file)
 
         '''
-        Set iteration parameters
+        #Set iteration parameters
         '''
         self.chisq = []
         self.chisq.append(999999.9)
@@ -370,7 +370,7 @@ class GalsimKernel:
 
         self.cal_flux_guess = 200
         print 'Done Innitting'
-        #raw_input()
+        #raw_input()'''
         return
 
     #CURRENTLY THIS ONLY WORKS FOR THE G BAND!!
@@ -952,7 +952,7 @@ class GalsimKernel:
         sim_stamps = data['simulated_stamps']
         real_data_stamps = data['data_stamps']
         sn_flux_history = data['sn_flux_history']
-
+        '''
         print pixel_history
         print pixel_history.shape
         pixel1_vec = []
@@ -984,42 +984,38 @@ class GalsimKernel:
         P.plot(np.arange(0,len(pixel4_vec_np)),pixel4_vec_np)
         out = os.path.join(self.outdir,'pixel_history.png')
         P.savefig(out)
+        '''
         P.figure(5)
-        P.plot(np.arange(0,len(sn_flux_history[1])),sn_flux_history[1])
-        P.plot(np.arange(0,len(sn_flux_history[2])),sn_flux_history[2])
-        P.plot(np.arange(0,len(sn_flux_history[4])),sn_flux_history[4])
-        P.plot(np.arange(0,len(sn_flux_history[3])),sn_flux_history[3])
-        P.plot(np.arange(0,len(sn_flux_history[5])),sn_flux_history[5])
-        P.plot(np.arange(0,len(sn_flux_history[6])),sn_flux_history[6])
-        P.plot(np.arange(0,len(sn_flux_history[7])),sn_flux_history[7])
-        P.plot(np.arange(0,len(sn_flux_history[8])),sn_flux_history[8])
-        P.plot(np.arange(0,len(sn_flux_history[9])),sn_flux_history[9])
-        P.plot(np.arange(0,len(sn_flux_history[10])),sn_flux_history[10])
+        P.plot(np.arange(0,len(sn_flux_history[1][-3000:])),sn_flux_history[1][-3000:])
+        P.plot(np.arange(0,len(sn_flux_history[2][-3000:])),sn_flux_history[2][-3000:])
+        P.plot(np.arange(0,len(sn_flux_history[4][-3000:])),sn_flux_history[4][-3000:])
+        P.plot(np.arange(0,len(sn_flux_history[3][-3000:])),sn_flux_history[3][-3000:])
+        P.plot(np.arange(0,len(sn_flux_history[5][-3000:])),sn_flux_history[5][-3000:])
+        P.plot(np.arange(0,len(sn_flux_history[6][-3000:])),sn_flux_history[6][-3000:])
+        P.plot(np.arange(0,len(sn_flux_history[7][-3000:])),sn_flux_history[7][-3000:])
+        P.plot(np.arange(0,len(sn_flux_history[8][-3000:])),sn_flux_history[8][-3000:])
+        P.plot(np.arange(0,len(sn_flux_history[9][-3000:])),sn_flux_history[9][-3000:])
+        P.plot(np.arange(0,len(sn_flux_history[10][-3000:])),sn_flux_history[10][-3000:])
         P.xlabel('iter')
         P.ylabel('Counts')
         out = os.path.join(self.outdir,'sn_counts_history.png')
         P.savefig(out)
 
         P.figure(9)
-        P.plot(self.autocorr(sn_flux_history[1]))
-        P.plot(self.autocorr(sn_flux_history[2]))
-        P.plot(self.autocorr(sn_flux_history[3]))
-        P.plot(self.autocorr(sn_flux_history[4]))
-        P.plot(self.autocorr(sn_flux_history[5]))
-        P.plot(self.autocorr(sn_flux_history[6]))
-        P.plot(self.autocorr(sn_flux_history[7]))
-        P.plot(self.autocorr(sn_flux_history[8]))
-        P.plot(self.autocorr(sn_flux_history[9]))
-        P.plot(self.autocorr(sn_flux_history[10]))
+        P.plot(self.autocorr(sn_flux_history[1][-3000:]))
+        P.plot(self.autocorr(sn_flux_history[2][-3000:]))
+        P.plot(self.autocorr(sn_flux_history[3][-3000:]))
+        P.plot(self.autocorr(sn_flux_history[4][-3000:]))
+        P.plot(self.autocorr(sn_flux_history[5][-3000:]))
+        P.plot(self.autocorr(sn_flux_history[6][-3000:]))
+        P.plot(self.autocorr(sn_flux_history[7][-3000:]))
+        P.plot(self.autocorr(sn_flux_history[8][-3000:]))
+        P.plot(self.autocorr(sn_flux_history[9][-3000:]))
+        P.plot(self.autocorr(sn_flux_history[10][-3000:]))
         out = os.path.join(self.outdir,'autocorr.png')
         P.savefig(out)
 
-        P.figure(10)
-        P.acorr(sn_flux_history[1])
-        out = os.path.join(self.outdir,'autocorr_pylab.png')
-        P.savefig(out)
-
-        P.figure(6)
+        '''P.figure(6)
         for i in np.arange(len(self.galpos_ras)):
             P.plot(np.arange(0,len(sn_flux_history[i])),-2.5*np.log10(sn_flux_history[i])+self.image_zero_points[i])
         out = os.path.join(self.outdir,'sn_mags_history.png')
@@ -1072,7 +1068,7 @@ class GalsimKernel:
         #n, bins, patches = P.hist(pixel3_vec_np, 100, histtype='stepfilled',alpha=.3)
         #n, bins, patches = P.hist(pixel4_vec_np, 100, histtype='stepfilled',alpha=.3)
         #P.show()
-
+        '''
         return
 
     def autocorr( self, x ):
