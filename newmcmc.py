@@ -266,9 +266,9 @@ class metropolis_hastings():
 
     def make_history( self ):
         num_iter = len( self.history )
-        self.nphistory = np.zeros( (num_iter , len( self.model )) ) 
+        self.nphistory = np.zeros( (num_iter , self.model.shape[0], self.model.shape[1]) ) 
         for i in np.arange( num_iter ):
-            self.nphistory[ i , : ] = self.history[ i ]
+            self.nphistory[ i , : , : ] = self.history[ i ]
 
         #self.nphistory
         #p.plot(self.nphistory[:,-4])

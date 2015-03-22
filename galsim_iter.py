@@ -12,8 +12,8 @@ print 'importing'
 import sys
 sys.path.append("/global/u1/d/dbrout/FinalPhot/lib/") 
 
-#import galsim
-#import galsim.des
+import galsim
+import galsim.des
 import numpy as np
 import pyfits as pf
 from scipy import stats
@@ -24,6 +24,8 @@ import rdcol
 from scipy.ndimage.interpolation import zoom
 import copy
 from scipy.ndimage.filters import median_filter
+
+#import newmcmc as rundmc
 
 import matplotlib
 matplotlib.use('Agg')
@@ -59,10 +61,12 @@ class GalsimKernel:
                  , SN_RA_guess = None # arcsec from center of entire image (not stamp)
                  , SN_DEC_guess = None # arsec from center of entire image (not stamp)
                  , satisfactory = 39 # process is iterated until chisq reaches this value
-                 , stamp_RA = 18
-                 , stamp_DEC = 18
+                 , stamp_RA = 20
+                 , stamp_DEC = 20
+                 , sn_stampsize = 20
                  , star_stamp_RA = 20
                  , star_stamp_DEC = 20
+                 , star_stampsize = 20
                  , psf_files = None
                  , weights_files = None
                  , star_dicts = None
@@ -140,6 +144,8 @@ class GalsimKernel:
 
         self.star_stamp_RA = star_stamp_RA
         self.star_stamp_DEC = star_stamp_DEC
+        self.star_stampsize = star_stampsize
+
 
         self.star_dicts = star_dicts
 
@@ -150,6 +156,7 @@ class GalsimKernel:
         self.galpos_backgrounds = np.zeros( len( galpos_ras ) )
         self.stamp_RA = float( stamp_RA )
         self.stamp_DEC = float( stamp_DEC )
+        self.sn_stampsize = sn_stampsize
         self.sn_stdev = sn_stdev
 
         self.satisfactory = satisfactory
@@ -214,7 +221,7 @@ class GalsimKernel:
         #self.pixel_scale = 0.2634
         
         #get wcs information from real data file (this doesnt change as model changes)                                                
-        '''self.wcss = []
+        self.wcss = []
         [ self.wcss.append(galsim.FitsWCS( real_img_file )) for real_img_file in self.real_img_files ]
 
         # Create supernova point source (ie. very very small gaussian)
@@ -310,17 +317,12 @@ class GalsimKernel:
         if not continu:
             print 'Are you sure you want to continue? you may be overwriting zeropoint infomration if the npz file has not changed....'
             #raw_input()
-            self.get_zeropoint_multiplicative_factor()
-        self.plot_zero_point_fits()
+            #self.get_zeropoint_multiplicative_factor()
+        #self.plot_zero_point_fits()
         #raw_input()
         print 'Done with zeropoints'
         #self.what_are_the_zpt_outliers()
         
-        #  NOT WORKING!!!!!!
-        #print self.real_img_files[0]
-        #self.fit_image_zero_point( self.mean_star_counts[0], self.star_mags[0])
-        #print self.real_img_files[1]
-        #self.fit_image_zero_point( self.mean_star_counts[1], self.star_mags[1])
         self.get_real_images_on_same_zpt()
 
 
@@ -358,7 +360,7 @@ class GalsimKernel:
         #Set iteration parameters
         '''
         self.chisq = []
-        self.chisq.append(999999.9)
+        self.chisq.append(9999999.9)
         self.model_pixels = []
         [ self.model_pixels.append([]) for i in np.nditer(self.real_data_stamps_ravel[self.model_img_index])]
 
@@ -420,13 +422,13 @@ class GalsimKernel:
                     #and RUN MCMC
                     num_iter = 0
                     #if dojust:
-                    while num_iter < 3000:
-                        #print num_iter
+                    keep_going = True
+                    while keep_going:
                         num_iter += 1
-                        #print 'last chisq: '+str(self.cal_star_chisq_history[-1])
+                        if (self.counter % 10000) == 9000: 
+                            keep_going = self.check_geweke(self.star_counts_histories[epoch][cal_star])
                         self.star_mcmc(epoch,cal_star)
-                        #print 'this chisq: '+str(self.this_cal_star_chisq)
-                        #print self.star_counts_histories[epoch][cal_star]
+
                     '''P.figure(1)
                     P.imshow(self.cal_simulated_image)
                     out = os.path.join(self.outdir,'test_cal_sim.png')
@@ -449,11 +451,9 @@ class GalsimKernel:
                     print 'calc mag std: '+str(-2.5*np.log10(np.std(self.star_counts_histories[epoch][cal_star][200:])))
                     #raw_input()
                     '''
-                    #print np.mean(self.star_counts_histories[epoch][cal_star][2000:])
-                    #print np.std(self.star_counts_histories[epoch][cal_star][1400:])
-                    #raw_input()
-                    #if np.mean(self.star_counts_histories[epoch][cal_star][1400:]) 
-                    self.mean_star_counts[epoch].append(np.mean(self.star_counts_histories[epoch][cal_star][2000:]))
+
+                    #take mean of second half of the history
+                    self.mean_star_counts[epoch].append(np.mean(np.split(self.star_counts_histories[epoch][cal_star],2)[1]))
                     
                     self.star_mags[epoch].append(cal_star_mag)
 
@@ -715,17 +715,23 @@ class GalsimKernel:
         self.thischisq = 999999.9
         self.t1 = time.time()
         self.counter = 0
-        self.t2 = time.time()
+        keep_going = True
 
-        while self.t2-self.t1 < self.run_time:
-            self.t2 = time.time()
+        while keep_going:
+            
             self.counter += 1
+            
+            #Check Geweke Convergence Diagnostic every 5000 iterations
+            if (self.counter % 10000) == 9000: 
+                keep_going = self.check_geweke(self.sn_flux_history)
+            
             self.accepted_int += 1
             
             #This is it!
             self.mcmc()
             #print counter
 
+        self.t2 = time.time()
         self.summarize_run()
 
     def summarize_run( self ):
@@ -1137,15 +1143,116 @@ class GalsimKernel:
         return None
 
 
-class Model:
-    def __init__( self 
-                , isSN = False
-                , isStarCal = True
-                ):
-        pass
+    def check_geweke( self, history, zscore_mean_crit=.7, zscore_std_crit=1.0 ):
+        nphistory = self.make_flux_history( history )
+        zscores = self.geweke( nphistory )
+        keep_going = True
+        #print 'done'
+        #If abs(mean) of zscores is less than .5 and if stdev lt 1.0 then stop and calculate values and cov
+        means = np.mean(zscores[1,:,:], axis=0)
+        print means
+        stdevs = np.std(zscores[1,:,:], axis=0)
+        print stdevs
+        alltrue = True
+        for mean in means:
+            if alltrue:
+                if abs(mean) > zscore_mean_crit:
+                    alltrue = False
+        if alltrue:
+            for std in stdevs:
+                if alltrue:
+                    if std > zscore_std_crit:
+                        alltrue = False
+        if alltrue:
+            keep_going = False
+            print 'Zscores computed and convergence criteria has been met'
+        else:
+            print 'Zscores computed and convergence criteria have not been met, mcmc will continue...'
+
+        raw_input()
+        return keep_going
+
+    def geweke( self, x_in, first = .1, last = .5, intervals = 20, maxlag = 20):
+        """Return z-scores for convergence diagnostics.
+        Compare the mean of the first percent of series with the mean of the last percent of
+        series. x is divided into a number of segments for which this difference is
+        computed. If the series is converged, this score should oscillate between
+        -1 and 1.
+        Parameters
+        ----------
+        x : array-like, size x[num_params,num_iter]
+          The trace of some stochastic parameter.
+        first : float
+          The fraction of series at the beginning of the trace.
+        last : float
+          The fraction of series at the end to be compared with the section
+          at the beginning.
+        intervals : int
+          The number of segments.
+        maxlag : int
+          Maximum autocorrelation lag for estimation of spectral variance
+        Returns
+        -------
+
+        """
+    
+        # Filter out invalid intervals
+        if first + last >= 1:
+            raise ValueError(
+                "Invalid intervals for Geweke convergence analysis",
+                (first, last))
+
+        #if its 1d make it 2d so all code can be the same
+        ndim = np.ndim(x_in)
+        if ndim == 1:
+            x = np.array(x_in.shape[0],1)
+            x[:,0] = x_in
+        else:
+            x = x_in
+        starts = np.linspace(0, int(x[:,0].shape[0]*(1.-last)), intervals).astype(int)
 
 
+        # Initialize list of z-scores
+        zscores = [None] * intervals 
+        zscores = np.zeros((2,len(starts),x.shape[1]))
 
+
+        # Loop over start indices
+        #print len(starts)
+        for i,s in enumerate(starts):
+
+            # Size of remaining array
+            x_trunc = x[s:,:]
+            #print x_trunc.shape
+            n = x_trunc.shape[0]
+
+            # Calculate slices
+            first_slice = x_trunc[ :int(first * n),:]
+            last_slice = x_trunc[ int(last * n):,:]
+
+            z = (first_slice.mean(axis=0) - last_slice.mean(axis=0))
+            
+            #spectral density
+            z /= np.sqrt(np.fft.rfft(first_slice,axis=0)[0]/first_slice.shape[0] +
+                     np.fft.rfft(last_slice,axis=0)[0]/last_slice.shape[0])
+            
+            #print zscores.shape
+            #print x.shape[0]
+            zscores[0,i,:] = np.ones(x.shape[1])*x.shape[0] - n
+            #print z.shape
+            zscores[1,i,:] = z
+            #print zscores[1,:,:]
+
+        #print zscores[1,:,:]
+        #raw_input()
+        return zscores
+
+    def make_flux_history( self, history ):
+        num_epoch = len( history )
+        out = np.zeros( len(history[0]),num_epoch ) 
+        for i in np.arange( num_epoch ):
+            out[ : , i ] = history[ i ]
+        return out
 
 def read_query( file, image_dir, image_nums):
     query = rdcol.read( file, 1, 2, '\t')
@@ -1317,9 +1424,10 @@ if __name__=='__main__':
                         , mjds = mjds
                         )
     
-    #test.run()
+    test.run()
     test.plot_pixel_histograms()
+    #1252 line needs fix
     #Check backgrounds by zooming out
-
+    #convert to numpy.append so i dont have to make history
     # CREATE MODEL OBJECT AND GIVE IT METHODS ON HOW TO ADJUST THE MODEL
     # ADD THE OPTION TO FEED IN GALAXY POSITIONS IN DEGRES! AND OTHER UNITS
