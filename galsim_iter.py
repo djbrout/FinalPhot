@@ -361,12 +361,15 @@ class GalsimKernel:
         '''
         self.chisq = []
         self.chisq.append(9999999.9)
-        self.model_pixels = []
-        [ self.model_pixels.append([]) for i in np.nditer(self.real_data_stamps_ravel[self.model_img_index])]
+        self.model_pixels = np.zeros(1,len(self.real_data_stamps_ravel[self.model_img_index]))
+        
 
-        self.pixel_history = []
-        self.sn_flux_history = []
-        [ self.sn_flux_history.append([]) for i in np.arange(len(self.galpos_ras))]
+        self.pixel_history = np.zeros((1,self.model.shape))
+        self.sn_flux_history = np.zeros(1,len(self.galpos_ras))
+        print self.pixel_history
+        print 'sn flux'
+        print self.sn_flux_history
+        raw_input()
         self.accepted_history = 0.5
         self.accepted_int = 0
 
@@ -820,9 +823,13 @@ class GalsimKernel:
 
     def update_history(self):
         #if self.thischisq < self.burn_in_chisq : #dont count burn-in period
-        self.pixel_history.append( self.kicked_model )
         
-        [ self.sn_flux_history[epoch].append( self.kicked_SN_fluxes[epoch] ) for epoch in np.arange(len(self.kicked_SN_fluxes)) ]
+        self.pixel_history = np.append([self.pixel_history.append( self.kicked_model )], axis=0)
+        
+        self.sn_flux_history = np.append([self.kicked_SN_fluxes],axis=0)
+        print 'pixel history'
+        print self.pixel_history[1,:,:]
+        raw_input()
         return
 
     def update_unaccepted_cal_history(self, epoch, objid):
@@ -831,8 +838,10 @@ class GalsimKernel:
 
     def update_unaccepted_history(self):
         #if self.thischisq < self.burn_in_chisq :#dont count burn in period
-        self.pixel_history.append( self.model )
-        [ self.sn_flux_history[epoch].append( self.SN_fluxes[epoch] ) for epoch in np.arange(len(self.SN_fluxes)) ]
+        self.pixel_history = np.append([self.pixel_history.append( self.model )], axis=0)
+        self.sn_flux_history = np.append([self.SN_fluxes],axis=0)
+        print self.pixel_history[1,:,:]
+        raw_input()
         return
 
     """                                                                                                                                    
